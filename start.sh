@@ -60,7 +60,7 @@ chmod +x /usr/local/bin/mc
 echo -e "${GREEN}install docker ....${NC}"
 for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do sudo apt-get remove $pkg; done
 apt-get update
-apt-get install -y ca-certificates curl gnupg
+DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates curl gnupg
 install -m 0755 -d /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 chmod a+r /etc/apt/keyrings/docker.gpg
@@ -73,12 +73,13 @@ apt-get update
 
 if [ $UBUNTU_VERSION = "focal" ]; then
     VERSION_STRING=5:25.0.3-1~ubuntu.20.04~focal
-    sudo apt-get install -y docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plugin
+    DEBIAN_FRONTEND=noninteractive apt-get install -y docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plugin
 elif [ $UBUNTU_VERSION = "jammy" ]; then
     VERSION_STRING=5:25.0.3-1~ubuntu.22.04~jammy
-    sudo apt-get install -y docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plugin
+    DEBIAN_FRONTEND=noninteractive apt-get install -y docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plugin
 else
-    echo "not proper version, please check your ubuntu version first."
+    echo -e "${RED} not proper version, please check your ubuntu version first.${NC}"
+    exit 1
 fi
 apt-mark hold docker-ce docker-ce-cli
 
