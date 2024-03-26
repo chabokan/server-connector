@@ -95,6 +95,7 @@ git clone https://github.com/chabokan/node-manager /var/manager
 cd /var/manager
 docker compose up -d
 
+sleep 15
 # Define the URL
 url="http://0.0.0.0:8123/api/v1/connect/"
 
