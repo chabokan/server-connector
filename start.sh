@@ -56,8 +56,8 @@ if [ $COUNTRY = "IR" ]; then
 EOF
 
     echo -e "${GREEN}change server repo ...${NC}"
-    sed -i 's/http:\/\/archive.ubuntu.com/https:\/\/ir.ubuntu.sindad.cloud/g' /etc/apt/sources.list
-    sed -i 's/http:\/\/[a-z]*.archive.ubuntu.com/https:\/\/ir.ubuntu.sindad.cloud/g' /etc/apt/sources.list
+    sed -i 's/http:\/\/archive.ubuntu.com/https:\/\/mirror.arvancloud.ir/g' /etc/apt/sources.list
+    sed -i 's/http:\/\/[a-z]*.archive.ubuntu.com/https:\/\/mirror.arvancloud.ir/g' /etc/apt/sources.list
 else
     echo -e "${GREEN}add base dns ...${NC}"
     rm /etc/resolv.conf
