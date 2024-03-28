@@ -54,7 +54,6 @@ if [ $COUNTRY = "IR" ]; then
     nameserver 178.22.122.100
     nameserver 185.51.200.2
 EOF
-
     echo -e "${GREEN}change server repo ...${NC}"
     sed -i 's/http:\/\/archive.ubuntu.com/http:\/\/mirror.arvancloud.ir/g' /etc/apt/sources.list
     sed -i 's/http:\/\/[a-z]*.archive.ubuntu.com/http:\/\/mirror.arvancloud.ir/g' /etc/apt/sources.list
