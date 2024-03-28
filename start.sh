@@ -134,15 +134,10 @@ docker compose up -d
 
 sleep 15
 # Define the URL
-url="http://0.0.0.0:8123/api/v1/connect/"
-
-# Define the JSON request body
-
-# shellcheck disable=SC2016
-data='{"token": "'$TOKEN'"}'
+url="http://0.0.0.0:8123/api/v1/connect/?token=${TOKEN}"
 
 # Make the POST request with curl
-response=$(curl -X POST -H "Content-Type: application/json" -d "$data" "$url")
+response=$(curl -X POST -H "Content-Type: application/json" -d "" "$url")
 
 # Print the response
 echo "Response: $response"
