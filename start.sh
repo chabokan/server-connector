@@ -50,9 +50,9 @@ if [ $COUNTRY = "IR" ]; then
     echo -e "${GREEN}add proxy dns ...${NC}"
     rm /etc/resolv.conf
     cat >/etc/resolv.conf <<EOF
-    options timeout:1
-    nameserver 178.22.122.100
-    nameserver 185.51.200.2
+options timeout:1
+nameserver 178.22.122.100
+nameserver 185.51.200.2
 EOF
     echo -e "${GREEN}change server repo ...${NC}"
     sed -i 's/http:\/\/archive.ubuntu.com/http:\/\/mirror.arvancloud.ir/g' /etc/apt/sources.list
@@ -61,9 +61,9 @@ else
     echo -e "${GREEN}add base dns ...${NC}"
     rm /etc/resolv.conf
     cat >/etc/resolv.conf <<EOF
-    options timeout:1
-    nameserver 8.8.8.8
-    nameserver 1.1.1.1
+options timeout:1
+nameserver 8.8.8.8
+nameserver 1.1.1.1
 EOF
 
 fi
