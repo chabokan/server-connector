@@ -20,6 +20,21 @@ else
     exit 1
 fi
 
+
+SERVER_IP=$(hostname -I | awk '{print $1}')
+IP_CHECK_URL="https://api.country.is/$SERVER_IP"
+CHECK_IP=$(curl -s "$IP_CHECK_URL")
+
+if echo "$CHECK_IP" | grep -q "\"error\""; then
+  echo -e "${RED} Error! IP address not found ${NC}"
+  exit 1
+fi
+
+COUNTRY=$(echo "$CHECK_IP" | grep -o -P '"country":"\K[^"]+' | tr -d \")
+
+echo -e "${GREEN}Server IP: ${SERVER_IP} ${NC}"
+echo -e "${GREEN}Server Country: ${COUNTRY} ${NC}"
+
 UBUNTU_VERSION=$(lsb_release -c)
 UBUNTU_VERSION=${UBUNTU_VERSION#*:}
 
@@ -30,6 +45,29 @@ ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 echo -e "${GREEN}disable systemd resolved ...${NC}"
 systemctl disable systemd-resolved.service
 systemctl stop systemd-resolved
+
+if [ $COUNTRY = "IR" ]; then
+    echo -e "${GREEN}add proxy dns ...${NC}"
+    rm /etc/resolv.conf
+    cat >/etc/resolv.conf <<EOF
+    options timeout:1
+    nameserver 178.22.122.100
+    nameserver 185.51.200.2
+EOF
+
+    echo -e "${GREEN}change server repo ...${NC}"
+    sed -i 's/http:\/\/archive.ubuntu.com/https:\/\/ir.ubuntu.sindad.cloud/g' /etc/apt/sources.list
+    sed -i 's/http:\/\/[a-z]*.archive.ubuntu.com/https:\/\/ir.ubuntu.sindad.cloud/g' /etc/apt/sources.list
+else
+    echo -e "${GREEN}add base dns ...${NC}"
+    rm /etc/resolv.conf
+    cat >/etc/resolv.conf <<EOF
+    options timeout:1
+    nameserver 8.8.8.8
+    nameserver 1.1.1.1
+EOF
+
+fi
 
 echo -e "${GREEN}updating os ...${NC}"
 apt update -y && upgrade -y
