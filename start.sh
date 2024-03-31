@@ -129,11 +129,11 @@ mkdir -p /backups
 
 echo -e "${GREEN}installing node manager ....${NC}"
 git clone https://github.com/chabokan/node-manager /var/manager
-cd /var/manager
-pip3 install -g -r requirements.txt
-docker compose up -d
 
-" "
+cd /var/manager/
+pip3 install -r requirements.txt
+
+docker compose up -d
 
 echo -e "*/1 * * * * root cd /var/manager/ && python3 server-queue.py 2>&1
 " > /etc/cron.d/server-queue
