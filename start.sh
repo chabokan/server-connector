@@ -78,7 +78,7 @@ sysctl -w net.ipv6.conf.lo.disable_ipv6=1
 sysctl -p
 
 echo -e "${GREEN}install useful packages ....${NC}"
-DEBIAN_FRONTEND=noninteractive apt install -y iptables-persistent nano vim htop net-tools iputils-ping apache2-utils rkhunter supervisor net-tools htop fail2ban wget zip nmap git letsencrypt build-essential iftop dnsutils dsniff grepcidr iotop rsync atop software-properties-common
+DEBIAN_FRONTEND=noninteractive apt install -y iptables-persistent nano vim htop net-tools iputils-ping apache2-utils rkhunter supervisor net-tools htop fail2ban wget zip nmap git letsencrypt build-essential iftop dnsutils python3-pip dsniff grepcidr iotop rsync atop software-properties-common
 git config --global credential.helper store
 
 debconf-set-selections <<EOF
@@ -130,6 +130,7 @@ mkdir -p /backups
 echo -e "${GREEN}installing node manager ....${NC}"
 git clone https://github.com/chabokan/node-manager /var/manager
 cd /var/manager
+pip3 install -r requirements.txt
 docker compose up -d
 
 sleep 15
