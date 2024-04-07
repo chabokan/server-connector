@@ -56,7 +56,9 @@ nameserver 185.51.200.2
 EOF
     echo -e "${GREEN}change server repo ...${NC}"
     sed -i 's/http:\/\/archive.ubuntu.com/http:\/\/mirror.arvancloud.ir/g' /etc/apt/sources.list
+    sed -i 's/http:\/\/security.ubuntu.com/http:\/\/mirror.arvancloud.ir/g' /etc/apt/sources.list
     sed -i 's/http:\/\/[a-z]*.archive.ubuntu.com/http:\/\/mirror.arvancloud.ir/g' /etc/apt/sources.list
+    sed -i 's/http:\/\/[a-z]*.security.ubuntu.com/http:\/\/mirror.arvancloud.ir/g' /etc/apt/sources.list
 else
     echo -e "${GREEN}add base dns ...${NC}"
     rm /etc/resolv.conf
