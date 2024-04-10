@@ -166,6 +166,7 @@ wget https://raw.githubusercontent.com/chabokan/server-connector/main/vsftpd.con
 wget https://raw.githubusercontent.com/chabokan/server-connector/main/sshd_config -O sshd_config
 
 cp ./vsftpd.conf /etc/vsftpd.conf
+sed -i 's,\r,,;s, *$,,' /etc/vsftpd.conf
 cp ./sshd_config /etc/ssh/sshd_config
 
 service ssh restart
