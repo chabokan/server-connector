@@ -160,8 +160,8 @@ echo -e "*/1 * * * * root cd /var/manager/ && python3 server-queue.py 2>&1
 service cron restart
 
 cd /tmp
-wget https://raw.githubusercontent.com/chabokan/server-connector/main/vsftpd.conf
-wget https://raw.githubusercontent.com/chabokan/server-connector/main/sshd_config
+wget https://raw.githubusercontent.com/chabokan/server-connector/main/vsftpd.conf -O vsftpd.conf
+wget https://raw.githubusercontent.com/chabokan/server-connector/main/sshd_config -O sshd_config
 
 cp ./vsftpd.conf /etc/vsftpd.conf
 cp ./sshd_config /etc/ssh/sshd_config
