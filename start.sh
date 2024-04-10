@@ -152,6 +152,8 @@ git clone https://github.com/chabokan/node-manager /var/manager
 
 cd /var/manager/
 pip3 install -r requirements.txt
+sleep 2
+pip3 install -r requirements.txt
 
 docker compose up -d
 
