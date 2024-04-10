@@ -162,12 +162,16 @@ service cron restart
 wget https://raw.githubusercontent.com/chabokan/server-connector/main/vsftpd.conf
 wget https://raw.githubusercontent.com/chabokan/server-connector/main/sshd_config
 
+cd /tmp
 cp ./vsftpd.conf /etc/vsftpd.conf
 cp ./sshd_config /etc/ssh/sshd_config
 
 service ssh restart
 service sshd restart
 service vsftpd restart
+
+rm -rf vsftpd.conf
+rm -rf ./sshd_config
 
 curl -s https://raw.githubusercontent.com/chabokan/server-connector/main/firewall.sh | bash
 
