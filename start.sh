@@ -170,7 +170,7 @@ service ssh restart
 service sshd restart
 service vsftpd restart
 
-rm -rf vsftpd.conf
+rm -rf ./vsftpd.conf
 rm -rf ./sshd_config
 
 curl -s https://raw.githubusercontent.com/chabokan/server-connector/main/firewall.sh | bash
