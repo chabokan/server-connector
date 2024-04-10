@@ -80,7 +80,7 @@ sysctl -w net.ipv6.conf.lo.disable_ipv6=1
 sysctl -p
 
 echo -e "${GREEN}install useful packages ....${NC}"
-DEBIAN_FRONTEND=noninteractive apt install -y iptables-persistent nano vim htop net-tools iputils-ping apache2-utils rkhunter supervisor net-tools htop fail2ban wget zip nmap git letsencrypt build-essential iftop dnsutils python3-pip dsniff grepcidr iotop rsync atop software-properties-common
+DEBIAN_FRONTEND=noninteractive apt install -y iptables-persistent nano vsftpd vim htop net-tools iputils-ping apache2-utils rkhunter supervisor net-tools htop fail2ban wget zip nmap git letsencrypt build-essential iftop dnsutils python3-pip dsniff grepcidr iotop rsync atop software-properties-common
 git config --global credential.helper store
 
 debconf-set-selections <<EOF
@@ -158,6 +158,18 @@ docker compose up -d
 echo -e "*/1 * * * * root cd /var/manager/ && python3 server-queue.py 2>&1
 " > /etc/cron.d/server-queue
 service cron restart
+
+wget https://raw.githubusercontent.com/chabokan/server-connector/main/vsftpd.conf
+wget https://raw.githubusercontent.com/chabokan/server-connector/main/sshd_config
+
+cp ./vsftpd.conf /etc/vsftpd.conf
+cp ./sshd_config /etc/ssh/sshd_config
+
+service ssh restart
+service sshd restart
+service vsftpd restart
+
+curl -s https://raw.githubusercontent.com/chabokan/server-connector/main/firewall.sh | bash
 
 sleep 15
 # Define the URL
