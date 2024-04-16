@@ -157,7 +157,11 @@ pip3 install -r requirements.txt
 
 docker compose up -d
 
-echo -e "*/1 * * * * root cd /var/manager/ && python3 server-queue.py 2>&1
+declare -p | grep -Ev 'BASHOPTS|BASH_VERSINFO|EUID|PPID|SHELLOPTS|UID' > /.env
+
+echo -e "SHELL=/bin/bash
+BASH_ENV=/.env
+*/1 * * * * root cd /var/manager/ && python3 server-queue.py > /dev/null 2>&1
 " > /etc/cron.d/server-queue
 service cron restart
 
