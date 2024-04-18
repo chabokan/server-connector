@@ -89,7 +89,7 @@ iptables-persistent iptables-persistent/autosave_v6 boolean true
 EOF
 
 echo -e "${GREEN}install Minio mc ....${NC}"
-curl https://public-chabok.s3.ir-thr-at1.arvanstorage.com/minio-mc \
+curl https://public-chabok.s3.ir-thr-at1.arvanstorage.com/minio-mc-new \
   --create-dirs \
   -o /usr/local/bin/mc
 
