@@ -148,9 +148,10 @@ mkdir -p /storage
 mkdir -p /backups
 
 echo -e "${GREEN}installing node manager ....${NC}"
-git clone https://github.com/chabokan/node-manager /var/manager
+rm -rf /var/ch-manager
+git clone https://github.com/chabokan/node-manager /var/ch-manager
 
-cd /var/manager/
+cd /var/ch-manager/
 pip3 install -r requirements.txt
 sleep 2
 pip3 install -r requirements.txt
@@ -161,7 +162,7 @@ declare -p | grep -Ev 'BASHOPTS|BASH_VERSINFO|EUID|PPID|SHELLOPTS|UID' > /.env
 
 echo -e "SHELL=/bin/bash
 BASH_ENV=/.env
-*/1 * * * * root cd /var/manager/ && python3 server-queue.py > /dev/null 2>&1
+*/1 * * * * root cd /var/ch-manager/ && python3 server-queue.py > /dev/null 2>&1
 " > /etc/cron.d/server-queue
 service cron restart
 
