@@ -5,6 +5,7 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 NC='\033[0m' # No Color
+set -e
 
 if [ -n "$1" ]; then
     TOKEN=$1
@@ -24,7 +25,6 @@ fi
 SERVER_IP=$(hostname -I | awk '{print $1}')
 IP_CHECK_URL="https://api.country.is/$SERVER_IP"
 CHECK_IP=$(curl -s "$IP_CHECK_URL")
-
 if echo "$CHECK_IP" | grep -q "\"error\""; then
   echo -e "${RED} Error! IP address not found ${NC}"
   exit 1
