@@ -160,6 +160,8 @@ pip3 install -r requirements.txt
 sleep 2
 pip3 install -r requirements.txt
 
+alembic upgrade head  
+
 docker compose up -d
 
 declare -p | grep -Ev 'BASHOPTS|BASH_VERSINFO|EUID|PPID|SHELLOPTS|UID' > /.env
