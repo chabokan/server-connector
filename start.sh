@@ -58,7 +58,11 @@ EOF
     sed -i 's/http:\/\/archive.ubuntu.com/http:\/\/mirror.arvancloud.ir/g' /etc/apt/sources.list
     sed -i 's/http:\/\/security.ubuntu.com/http:\/\/mirror.arvancloud.ir/g' /etc/apt/sources.list
     sed -i 's/http:\/\/[a-z]*.archive.ubuntu.com/http:\/\/mirror.arvancloud.ir/g' /etc/apt/sources.list
+    sed -i 's/http:\/\/[a-z]*.[a-z]*.archive.ubuntu.com/http:\/\/mirror.arvancloud.ir/g' /etc/apt/sources.list
+    sed -i 's/http:\/\/[a-z]*.[a-z]*.[a-z]*.archive.ubuntu.com/http:\/\/mirror.arvancloud.ir/g' /etc/apt/sources.list
+    sed -i 's/http:\/\/[a-z]*.[a-z]*.[a-z]*.[a-z]*.archive.ubuntu.com/http:\/\/mirror.arvancloud.ir/g' /etc/apt/sources.list
     sed -i 's/http:\/\/[a-z]*.security.ubuntu.com/http:\/\/mirror.arvancloud.ir/g' /etc/apt/sources.list
+    
 else
     echo -e "${GREEN}add base dns ...${NC}"
     rm /etc/resolv.conf
