@@ -154,11 +154,12 @@ mkdir -p /backups
 echo -e "${GREEN}installing node manager ....${NC}"
 rm -rf /var/ch-manager
 git clone https://github.com/chabokan/node-manager /var/ch-manager
-
 cd /var/ch-manager/
 pip3 install -r requirements.txt
 sleep 2
 pip3 install -r requirements.txt
+
+alembic upgrade head
 
 docker compose up -d
 
