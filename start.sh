@@ -46,6 +46,14 @@ echo -e "${GREEN}disable systemd resolved ...${NC}"
 systemctl disable systemd-resolved.service
 systemctl stop systemd-resolved
 
+echo -e "${GREEN}add base dns ...${NC}"
+    rm /etc/resolv.conf
+    cat >/etc/resolv.conf <<EOF
+options timeout:1
+nameserver 8.8.8.8
+nameserver 1.1.1.1
+EOF
+
 if [ $COUNTRY = "IR" ]; then
     echo -e "${GREEN}change server repo ...${NC}"
     sed -i 's/http:\/\/archive.ubuntu.com/http:\/\/mirror.arvancloud.ir/g' /etc/apt/sources.list
@@ -55,16 +63,6 @@ if [ $COUNTRY = "IR" ]; then
     sed -i 's/http:\/\/[a-z]*.[a-z]*.[a-z]*.archive.ubuntu.com/http:\/\/mirror.arvancloud.ir/g' /etc/apt/sources.list
     sed -i 's/http:\/\/[a-z]*.[a-z]*.[a-z]*.[a-z]*.archive.ubuntu.com/http:\/\/mirror.arvancloud.ir/g' /etc/apt/sources.list
     sed -i 's/http:\/\/[a-z]*.security.ubuntu.com/http:\/\/mirror.arvancloud.ir/g' /etc/apt/sources.list
-    
-else
-    echo -e "${GREEN}add base dns ...${NC}"
-    rm /etc/resolv.conf
-    cat >/etc/resolv.conf <<EOF
-options timeout:1
-nameserver 8.8.8.8
-nameserver 1.1.1.1
-EOF
-
 fi
 
 echo -e "${GREEN}updating os ...${NC}"
