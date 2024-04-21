@@ -129,7 +129,7 @@ apt-mark hold docker-ce docker-ce-cli
 apt purge postfix -y
 
 
-echo -e "${GREEN}add shecan dns ...${NC}"
+echo -e "${GREEN}add base dns ...${NC}"
     rm /etc/resolv.conf
     cat >/etc/resolv.conf <<EOF
 options timeout:1
