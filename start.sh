@@ -187,9 +187,7 @@ rm -rf ./sshd_config
 
 curl -s https://raw.githubusercontent.com/chabokan/server-connector/main/firewall.sh | bash
 
-sleep 30
-docker compose restart
-sleep 30
+
 # Define the URL
 url="http://0.0.0.0:8123/api/v1/connect/?token=${TOKEN}"
 
