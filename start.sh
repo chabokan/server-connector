@@ -54,17 +54,16 @@ nameserver 8.8.8.8
 nameserver 1.1.1.1
 EOF
 
-curl https://raw.githubusercontent.com/freedomofdevelopers/fod/master/fodcmd/fod.sh >> ~/.bashrc && source ~/.bashrc
 
 if [ $COUNTRY = "IR" ]; then
     echo -e "${GREEN}change server repo ...${NC}"
-    sed -i 's/http:\/\/archive.ubuntu.com/http:\/\/mirror.arvancloud.ir/g' /etc/apt/sources.list
-    sed -i 's/http:\/\/security.ubuntu.com/http:\/\/mirror.arvancloud.ir/g' /etc/apt/sources.list
-    sed -i 's/http:\/\/[a-z]*.archive.ubuntu.com/http:\/\/mirror.arvancloud.ir/g' /etc/apt/sources.list
-    sed -i 's/http:\/\/[a-z]*.[a-z]*.archive.ubuntu.com/http:\/\/mirror.arvancloud.ir/g' /etc/apt/sources.list
-    sed -i 's/http:\/\/[a-z]*.[a-z]*.[a-z]*.archive.ubuntu.com/http:\/\/mirror.arvancloud.ir/g' /etc/apt/sources.list
-    sed -i 's/http:\/\/[a-z]*.[a-z]*.[a-z]*.[a-z]*.archive.ubuntu.com/http:\/\/mirror.arvancloud.ir/g' /etc/apt/sources.list
-    sed -i 's/http:\/\/[a-z]*.security.ubuntu.com/http:\/\/mirror.arvancloud.ir/g' /etc/apt/sources.list
+    sed -i 's/http:\/\/archive.ubuntu.com/http:\/\/ir.archive.ubuntu.com/g' /etc/apt/sources.list
+    sed -i 's/http:\/\/security.ubuntu.com/http:\/\/ir.archive.ubuntu.com/g' /etc/apt/sources.list
+    sed -i 's/http:\/\/[a-z]*.archive.ubuntu.com/http:\/\/ir.archive.ubuntu.com/g' /etc/apt/sources.list
+    sed -i 's/http:\/\/[a-z]*.[a-z]*.archive.ubuntu.com/http:\/\/ir.archive.ubuntu.com/g' /etc/apt/sources.list
+    sed -i 's/http:\/\/[a-z]*.[a-z]*.[a-z]*.archive.ubuntu.com/http:\/\/ir.archive.ubuntu.com/g' /etc/apt/sources.list
+    sed -i 's/http:\/\/[a-z]*.[a-z]*.[a-z]*.[a-z]*.archive.ubuntu.com/http:\/\/ir.archive.ubuntu.com/g' /etc/apt/sources.list
+    sed -i 's/http:\/\/[a-z]*.security.ubuntu.com/http:\/\/ir.archive.ubuntu.com/g' /etc/apt/sources.list
 fi
 
 echo -e "${GREEN}updating os ...${NC}"
