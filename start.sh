@@ -90,7 +90,10 @@ curl https://public-chabok.s3.ir-thr-at1.arvanstorage.com/minio-mc-new \
   -o /usr/local/bin/mc
 
 chmod +x /usr/local/bin/mc
-
+if [ $COUNTRY = "IR" ]; then
+  export http_proxy='http://fodev.org:8118'    
+  export https_proxy='http://fodev.org:8118'
+fi
 echo -e "${GREEN}install docker ....${NC}"
 for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do sudo apt-get remove $pkg; done
 apt-get update
@@ -127,10 +130,7 @@ echo -e "${GREEN}installing node manager ....${NC}"
 rm -rf /var/ch-manager
 git clone https://github.com/chabokan/node-manager /var/ch-manager
 cd /var/ch-manager/
-if [ $COUNTRY = "IR" ]; then
-  export http_proxy='http://fodev.org:8118'    
-  export https_proxy='http://fodev.org:8118'
-fi
+
 pip3 install -r requirements.txt
 sleep 2
 pip3 install -r requirements.txt
