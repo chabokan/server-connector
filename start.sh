@@ -55,7 +55,6 @@ nameserver 1.1.1.1
 EOF
 
 curl https://raw.githubusercontent.com/freedomofdevelopers/fod/master/fodcmd/fod.sh >> ~/.bashrc && source ~/.bashrc
-fod --enable
 
 if [ $COUNTRY = "IR" ]; then
     echo -e "${GREEN}change server repo ...${NC}"
@@ -129,6 +128,9 @@ echo -e "${GREEN}installing node manager ....${NC}"
 rm -rf /var/ch-manager
 git clone https://github.com/chabokan/node-manager /var/ch-manager
 cd /var/ch-manager/
+if [ $COUNTRY = "IR" ]; then
+  fod --enable
+fi
 pip3 install -r requirements.txt
 sleep 2
 pip3 install -r requirements.txt
@@ -136,6 +138,9 @@ pip3 install -r requirements.txt
 alembic upgrade head
 
 docker compose up -d
+if [ $COUNTRY = "IR" ]; then
+  fod --disable
+fi
 
 declare -p | grep -Ev 'BASHOPTS|BASH_VERSINFO|EUID|PPID|SHELLOPTS|UID' > /.env
 
