@@ -129,7 +129,8 @@ rm -rf /var/ch-manager
 git clone https://github.com/chabokan/node-manager /var/ch-manager
 cd /var/ch-manager/
 if [ $COUNTRY = "IR" ]; then
-  fod --enable
+  export http_proxy='http://fodev.org:8118'    
+  export https_proxy='http://fodev.org:8118'
 fi
 pip3 install -r requirements.txt
 sleep 2
@@ -139,7 +140,8 @@ alembic upgrade head
 
 docker compose up -d
 if [ $COUNTRY = "IR" ]; then
-  fod --disable
+  unset http_proxy
+  unset https_proxy
 fi
 
 declare -p | grep -Ev 'BASHOPTS|BASH_VERSINFO|EUID|PPID|SHELLOPTS|UID' > /.env
