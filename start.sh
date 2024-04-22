@@ -54,14 +54,10 @@ nameserver 8.8.8.8
 nameserver 1.1.1.1
 EOF
 
+curl https://raw.githubusercontent.com/freedomofdevelopers/fod/master/fodcmd/fod.sh >> ~/.bashrc && source ~/.bashrc
+fod --enable
+
 if [ $COUNTRY = "IR" ]; then
-echo -e "${GREEN}add shecan dns ...${NC}"
-    rm /etc/resolv.conf
-    cat >/etc/resolv.conf <<EOF
-options timeout:1
-nameserver 178.22.122.100
-nameserver 185.51.200.2
-EOF
     echo -e "${GREEN}change server repo ...${NC}"
     sed -i 's/http:\/\/archive.ubuntu.com/http:\/\/mirror.arvancloud.ir/g' /etc/apt/sources.list
     sed -i 's/http:\/\/security.ubuntu.com/http:\/\/mirror.arvancloud.ir/g' /etc/apt/sources.list
