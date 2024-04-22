@@ -55,6 +55,13 @@ nameserver 1.1.1.1
 EOF
 
 if [ $COUNTRY = "IR" ]; then
+echo -e "${GREEN}add shecan dns ...${NC}"
+    rm /etc/resolv.conf
+    cat >/etc/resolv.conf <<EOF
+options timeout:1
+nameserver 178.22.122.100
+nameserver 185.51.200.2
+EOF
     echo -e "${GREEN}change server repo ...${NC}"
     sed -i 's/http:\/\/archive.ubuntu.com/http:\/\/mirror.arvancloud.ir/g' /etc/apt/sources.list
     sed -i 's/http:\/\/security.ubuntu.com/http:\/\/mirror.arvancloud.ir/g' /etc/apt/sources.list
@@ -90,16 +97,6 @@ curl https://public-chabok.s3.ir-thr-at1.arvanstorage.com/minio-mc-new \
 
 chmod +x /usr/local/bin/mc
 
-# if [ $COUNTRY = "IR" ]; then
-# echo -e "${GREEN}add 403 dns ...${NC}"
-#     rm /etc/resolv.conf
-#     cat >/etc/resolv.conf <<EOF
-# options timeout:1
-# nameserver 10.202.10.202
-# nameserver 10.202.10.102
-# EOF
-# fi
-
 echo -e "${GREEN}install docker ....${NC}"
 for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do sudo apt-get remove $pkg; done
 apt-get update
@@ -127,16 +124,6 @@ fi
 apt-mark hold docker-ce docker-ce-cli
 
 apt purge postfix -y
-
-
-echo -e "${GREEN}add base dns ...${NC}"
-    rm /etc/resolv.conf
-    cat >/etc/resolv.conf <<EOF
-options timeout:1
-nameserver 8.8.8.8
-nameserver 1.1.1.1
-EOF
-
 
 mkdir -p /builds
 mkdir -p /storage
