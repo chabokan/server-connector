@@ -85,10 +85,6 @@ iptables-persistent iptables-persistent/autosave_v4 boolean true
 iptables-persistent iptables-persistent/autosave_v6 boolean true
 EOF
 
-echo -e "${GREEN}install Minio mc ....${NC}"
-curl https://dl.min.io/client/mc/release/linux-amd64/mc \
-  --create-dirs \
-  -o /usr/local/bin/mc
 
 chmod +x /usr/local/bin/mc
 echo -e "${GREEN}install docker ....${NC}"
