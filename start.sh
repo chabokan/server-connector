@@ -56,7 +56,7 @@ EOF
 
 
 if [ $COUNTRY = "IR" ]; then
-echo -e "${GREEN}add base dns ...${NC}"
+echo -e "${GREEN}add shecan dns ...${NC}"
     rm /etc/resolv.conf
     cat >/etc/resolv.conf <<EOF
 options timeout:1
@@ -142,13 +142,22 @@ pip3 install -r requirements.txt
 sleep 2
 pip3 install -r requirements.txt
 
-alembic upgrade head
-
-docker compose up -d
 if [ $COUNTRY = "IR" ]; then
   unset http_proxy
   unset https_proxy
 fi
+
+alembic upgrade head
+
+docker compose up -d
+
+echo -e "${GREEN}add base dns ...${NC}"
+    rm /etc/resolv.conf
+    cat >/etc/resolv.conf <<EOF
+options timeout:1
+nameserver 8.8.8.8
+nameserver 1.1.1.1
+EOF
 
 declare -p | grep -Ev 'BASHOPTS|BASH_VERSINFO|EUID|PPID|SHELLOPTS|UID' > /.env
 
@@ -174,6 +183,16 @@ rm -rf ./vsftpd.conf
 rm -rf ./sshd_config
 
 curl -s https://raw.githubusercontent.com/chabokan/server-connector/main/firewall.sh | bash
+
+if [ $COUNTRY = "IR" ]; then
+echo -e "${GREEN}add shecan dns ...${NC}"
+    rm /etc/resolv.conf
+    cat >/etc/resolv.conf <<EOF
+options timeout:1
+nameserver 178.22.122.100
+nameserver 185.51.200.2
+EOF
+fi
 
 sleep 15
 
