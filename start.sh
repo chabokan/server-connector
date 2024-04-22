@@ -54,15 +54,9 @@ nameserver 8.8.8.8
 nameserver 1.1.1.1
 EOF
 
-
 if [ $COUNTRY = "IR" ]; then
-echo -e "${GREEN}add shecan dns ...${NC}"
-    rm /etc/resolv.conf
-    cat >/etc/resolv.conf <<EOF
-options timeout:1
-nameserver 178.22.122.100
-nameserver 185.51.200.2
-EOF
+    export http_proxy='http://fodev.org:8118'    
+    export https_proxy='http://fodev.org:8118'
     echo -e "${GREEN}change server repo ...${NC}"
     sed -i 's/http:\/\/archive.ubuntu.com/http:\/\/ir.archive.ubuntu.com/g' /etc/apt/sources.list
     sed -i 's/http:\/\/security.ubuntu.com/http:\/\/ir.archive.ubuntu.com/g' /etc/apt/sources.list
@@ -97,10 +91,6 @@ curl https://public-chabok.s3.ir-thr-at1.arvanstorage.com/minio-mc-new \
   -o /usr/local/bin/mc
 
 chmod +x /usr/local/bin/mc
-if [ $COUNTRY = "IR" ]; then
-  export http_proxy='http://fodev.org:8118'    
-  export https_proxy='http://fodev.org:8118'
-fi
 echo -e "${GREEN}install docker ....${NC}"
 for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do sudo apt-get remove $pkg; done
 apt-get update
@@ -152,14 +142,6 @@ if [ ! -f /var/ch-manager/sql_app.db ]; then
 fi
 
 docker compose up -d
-
-echo -e "${GREEN}add base dns ...${NC}"
-    rm /etc/resolv.conf
-    cat >/etc/resolv.conf <<EOF
-options timeout:1
-nameserver 8.8.8.8
-nameserver 1.1.1.1
-EOF
 
 declare -p | grep -Ev 'BASHOPTS|BASH_VERSINFO|EUID|PPID|SHELLOPTS|UID' > /.env
 
