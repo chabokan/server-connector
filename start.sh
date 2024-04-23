@@ -13,6 +13,11 @@ else
     read -p "Enter TOKEN: " TOKEN
 fi
 
+if [ -n "$2" ]; then
+    TYPE_OF_CONNECT=$1
+else
+    TYPE_OF_CONNECT="direct"
+fi
 
 if [[ $(uname -a) == *Ubuntu* ]]; then
         echo -e "${GREEN}YES! This is Ubuntu.${NC}"
@@ -54,9 +59,36 @@ nameserver 8.8.8.8
 nameserver 1.1.1.1
 EOF
 
-if [ $COUNTRY = "IR" ]; then
-    export http_proxy='http://wraygnbd:eqj5y20wjznk@proxy.chabokan-two.ir:6322'
-    export https_proxy='http://wraygnbd:eqj5y20wjznk@proxy.chabokan-two.ir:6322'
+if [ "$COUNTRY" = "IR" ]; then
+    if [ $TYPE_OF_CONNECT = "proxy1" ]; then
+      export http_proxy='http://wraygnbd:eqj5y20wjznk@proxy.chabokan-two.ir:6322'
+      export https_proxy='http://wraygnbd:eqj5y20wjznk@proxy.chabokan-two.ir:6322'
+    elif [ $TYPE_OF_CONNECT = "proxy2" ]; then
+      export http_proxy='http://wraygnbd:eqj5y20wjznk@proxy2.chabokan-two.ir:6405'
+      export https_proxy='http://wraygnbd:eqj5y20wjznk@proxy2.chabokan-two.ir:6405'
+    elif [ $TYPE_OF_CONNECT = "proxy3" ]; then
+      export http_proxy='http://wraygnbd:eqj5y20wjznk@proxy3.chabokan-two.ir:6247'
+      export https_proxy='http://wraygnbd:eqj5y20wjznk@proxy3.chabokan-two.ir:6247'
+    elif [ $TYPE_OF_CONNECT = "fod" ]; then
+      export http_proxy='http://fodev.org:8118'
+      export https_proxy='http://fodev.org:8118'
+    elif [ $TYPE_OF_CONNECT = "shecan-dns" ]; then
+      echo -e "${GREEN}add shecan dns ...${NC}"
+      rm /etc/resolv.conf
+      cat >/etc/resolv.conf <<EOF
+options timeout:1
+nameserver 178.22.122.100
+nameserver 185.51.200.2
+EOF
+    elif [ $TYPE_OF_CONNECT = "403-dns" ]; then
+      echo -e "${GREEN}add 403 dns ...${NC}"
+      rm /etc/resolv.conf
+      cat >/etc/resolv.conf <<EOF
+options timeout:1
+nameserver 10.202.10.202
+nameserver 10.202.10.102
+EOF
+    fi
     echo -e "${GREEN}change server repo ...${NC}"
     sed -i 's/http:\/\/archive.ubuntu.com/http:\/\/ir.archive.ubuntu.com/g' /etc/apt/sources.list
     sed -i 's/http:\/\/security.ubuntu.com/http:\/\/ir.archive.ubuntu.com/g' /etc/apt/sources.list
