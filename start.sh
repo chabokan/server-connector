@@ -212,8 +212,9 @@ if [ $COUNTRY = "IR" ]; then
   unset https_proxy
 fi
 
-if [ ! -f /var/ch-manager/sql_app.db ]; then
-    alembic upgrade head
+if ! [ -f "/var/ch-manager/sql_app.db" ]
+then
+   alembic upgrade head
 fi
 
 docker compose up -d
