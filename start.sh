@@ -44,6 +44,7 @@ function choose_from_menu() {
     printf -v $outvar "${options[$cur]}"
 }
 selections=(
+"direct"
 "proxy1"
 "proxy2"
 "proxy3"
