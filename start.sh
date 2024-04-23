@@ -60,7 +60,7 @@ fi
 if [[ "$2" != '' ]]; then
     TYPE_OF_CONNECT=$2
 else
-    choose_from_menu "Please make a choice:" TYPE_OF_CONNECT "${selections[@]}"
+    choose_from_menu "Please select Type of Connect:" TYPE_OF_CONNECT "${selections[@]}"
 fi
 
 if [[ $(uname -a) == *Ubuntu* ]]; then
