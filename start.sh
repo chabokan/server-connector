@@ -39,6 +39,7 @@ COUNTRY=$(echo "$CHECK_IP" | grep -o -P '"country":"\K[^"]+' | tr -d \")
 
 echo -e "${GREEN}Server IP: ${SERVER_IP} ${NC}"
 echo -e "${GREEN}Server Country: ${COUNTRY} ${NC}"
+echo -e "${GREEN}type of connect: ${TYPE_OF_CONNECT} ${NC}"
 
 UBUNTU_VERSION=$(lsb_release -c)
 UBUNTU_VERSION=${UBUNTU_VERSION#*:}
