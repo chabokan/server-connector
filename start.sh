@@ -16,7 +16,7 @@ else
 fi
 
 if [ -n "$2" ]; then
-    TYPE_OF_CONNECT=$1
+    TYPE_OF_CONNECT=$2
 else
     TYPE_OF_CONNECT="direct"
 fi
