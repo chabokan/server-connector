@@ -58,12 +58,6 @@ else
     read -p "Enter TOKEN: " TOKEN
 fi
 
-if [[ "$2" != '' ]]; then
-    TYPE_OF_CONNECT=$2
-else
-    choose_from_menu "Please select Type of Connect:" TYPE_OF_CONNECT "${selections[@]}"
-fi
-
 if [[ $(uname -a) == *Ubuntu* ]]; then
         echo -e "${GREEN}YES! This is Ubuntu.${NC}"
 else
@@ -84,7 +78,6 @@ COUNTRY=$(echo "$CHECK_IP" | grep -o -P '"country":"\K[^"]+' | tr -d \")
 
 echo -e "${GREEN}Server IP: ${SERVER_IP} ${NC}"
 echo -e "${GREEN}Server Country: ${COUNTRY} ${NC}"
-echo -e "${GREEN}type of connect: ${TYPE_OF_CONNECT} ${NC}"
 
 UBUNTU_VERSION=$(lsb_release -c)
 UBUNTU_VERSION=${UBUNTU_VERSION#*:}
@@ -106,6 +99,12 @@ nameserver 1.1.1.1
 EOF
 
 if [ "$COUNTRY" = "IR" ]; then
+    if [[ "$2" != '' ]]; then
+        TYPE_OF_CONNECT=$2
+    else
+        choose_from_menu "Please select Type of Connect:" TYPE_OF_CONNECT "${selections[@]}"
+    fi
+    echo -e "${GREEN}Type of Connect: ${TYPE_OF_CONNECT} ${NC}"
     if [ $TYPE_OF_CONNECT = "proxy1" ]; then
       echo -e "${GREEN}set type of connect proxy1 ...${NC}"
       export http_proxy='http://wraygnbd:eqj5y20wjznk@proxy.chabokan-two.ir:6322'
