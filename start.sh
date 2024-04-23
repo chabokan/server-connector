@@ -18,14 +18,14 @@ fi
 if [[ "$2" != '' ]]; then
     TYPE_OF_CONNECT=$2
 else
-     echo "Select a proxy server:"
+    echo "Select a proxy server:"
     echo "1. proxy1"
     echo "2. proxy2"
     echo "3. proxy3"
     echo "4. fod"
     echo "5. shecan-dns"
     echo "6. 403-dns"
-    read -p "select proxy server:" $option
+    read -p "select proxy server:" option
     case $option in
           1)
             TYPE_OF_CONNECT="proxy1"
@@ -42,7 +42,7 @@ else
           5)
             TYPE_OF_CONNECT="shecan-dns"
             ;;
-          5)
+          6)
             TYPE_OF_CONNECT="403-dns"
             ;;
      esac
