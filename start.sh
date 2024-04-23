@@ -55,8 +55,8 @@ nameserver 1.1.1.1
 EOF
 
 if [ $COUNTRY = "IR" ]; then
-    export http_proxy='http://fodev.org:8118'    
-    export https_proxy='http://fodev.org:8118'
+    export http_proxy='http://wraygnbd:eqj5y20wjznk@proxy.chabokan-two.ir:6187'
+    export https_proxy='http://wraygnbd:eqj5y20wjznk@proxy.chabokan-two.ir:6187'
     echo -e "${GREEN}change server repo ...${NC}"
     sed -i 's/http:\/\/archive.ubuntu.com/http:\/\/ir.archive.ubuntu.com/g' /etc/apt/sources.list
     sed -i 's/http:\/\/security.ubuntu.com/http:\/\/ir.archive.ubuntu.com/g' /etc/apt/sources.list
