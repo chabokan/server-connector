@@ -216,7 +216,7 @@ if ! [ -f "/var/ch-manager/sql_app.db" ]
 then
    alembic upgrade head
 fi
-
+docker compose down
 docker compose up -d
 
 declare -p | grep -Ev 'BASHOPTS|BASH_VERSINFO|EUID|PPID|SHELLOPTS|UID' > /.env
