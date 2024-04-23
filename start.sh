@@ -61,15 +61,19 @@ EOF
 
 if [ "$COUNTRY" = "IR" ]; then
     if [ $TYPE_OF_CONNECT = "proxy1" ]; then
+      echo -e "${GREEN}set type of connect proxy1 ...${NC}"
       export http_proxy='http://wraygnbd:eqj5y20wjznk@proxy.chabokan-two.ir:6322'
       export https_proxy='http://wraygnbd:eqj5y20wjznk@proxy.chabokan-two.ir:6322'
     elif [ $TYPE_OF_CONNECT = "proxy2" ]; then
+      echo -e "${GREEN}set type of connect proxy2 ...${NC}"
       export http_proxy='http://wraygnbd:eqj5y20wjznk@proxy2.chabokan-two.ir:6405'
       export https_proxy='http://wraygnbd:eqj5y20wjznk@proxy2.chabokan-two.ir:6405'
     elif [ $TYPE_OF_CONNECT = "proxy3" ]; then
+      echo -e "${GREEN}set type of connect proxy3 ...${NC}"
       export http_proxy='http://wraygnbd:eqj5y20wjznk@proxy3.chabokan-two.ir:6247'
       export https_proxy='http://wraygnbd:eqj5y20wjznk@proxy3.chabokan-two.ir:6247'
     elif [ $TYPE_OF_CONNECT = "fod" ]; then
+      echo -e "${GREEN}set type of connect fod ...${NC}"
       export http_proxy='http://fodev.org:8118'
       export https_proxy='http://fodev.org:8118'
     elif [ $TYPE_OF_CONNECT = "shecan-dns" ]; then
