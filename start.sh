@@ -45,6 +45,10 @@ else
           6)
             TYPE_OF_CONNECT="403-dns"
             ;;
+          *)
+            echo "wrong choice!"
+            exit 1
+            ;;
      esac
 fi
 
