@@ -9,48 +9,6 @@ set -e
 unset http_proxy
 unset https_proxy
 
-function choose_from_menu() {
-    local prompt="$1" outvar="$2"
-    shift
-    shift
-    local options=("$@") cur=0 count=${#options[@]} index=0
-    local esc=$(echo -en "\e") # cache ESC as test doesn't allow esc codes
-    printf "$prompt\n"
-    while true
-    do
-        # list all options (option list is zero-based)
-        index=0
-        for o in "${options[@]}"
-        do
-            if [ "$index" == "$cur" ]
-            then echo -e " >\e[7m$o\e[0m" # mark & highlight the current option
-            else echo "  $o"
-            fi
-            index=$(( $index + 1 ))
-        done
-        read -s -n3 key # wait for user to key in arrows or ENTER
-        if [[ $key == $esc[A ]] # up arrow
-        then cur=$(( $cur - 1 ))
-            [ "$cur" -lt 0 ] && cur=0
-        elif [[ $key == $esc[B ]] # down arrow
-        then cur=$(( $cur + 1 ))
-            [ "$cur" -ge $count ] && cur=$(( $count - 1 ))
-        elif [[ $key == "" ]] # nothing, i.e the read delimiter - ENTER
-        then break
-        fi
-        echo -en "\e[${count}A" # go up to the beginning to re-render
-    done
-    # export the selection to the requested output variable
-    printf -v $outvar "${options[$cur]}"
-}
-selections=(
-"proxy1"
-"proxy2"
-"proxy3"
-"fod"
-"shecan-dns"
-"403-dns"
-)
 if [[ "$1" != '' ]]; then
     TOKEN=$1
 else
@@ -60,7 +18,34 @@ fi
 if [[ "$2" != '' ]]; then
     TYPE_OF_CONNECT=$2
 else
-    choose_from_menu "Please select Type of Connect:" TYPE_OF_CONNECT "${selections[@]}"
+     echo "Select a proxy server:"
+    echo "1. proxy1"
+    echo "2. proxy2"
+    echo "3. proxy3"
+    echo "4. fod"
+    echo "5. shecan-dns"
+    echo "6. 403-dns"
+    read -p "select proxy server:" $option
+    case $option in
+          1)
+            TYPE_OF_CONNECT="proxy1"
+            ;;
+          2)
+            TYPE_OF_CONNECT="proxy2"
+            ;;
+          3)
+            TYPE_OF_CONNECT="proxy3"
+            ;;
+          4)
+            TYPE_OF_CONNECT="fod"
+            ;;
+          5)
+            TYPE_OF_CONNECT="shecan-dns"
+            ;;
+          5)
+            TYPE_OF_CONNECT="403-dns"
+            ;;
+     esac
 fi
 
 if [[ $(uname -a) == *Ubuntu* ]]; then
