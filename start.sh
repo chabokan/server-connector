@@ -269,4 +269,5 @@ echo "Response: $response"
 message_on_error() {
   echo "run the command again and select a different type of connect !!!"
 }
+
 trap message_on_error ERR
