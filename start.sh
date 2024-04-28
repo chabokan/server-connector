@@ -6,7 +6,6 @@ GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 NC='\033[0m' # No Color
 set -e
-trap "echo -e '${RED}ERROR: Run the command again and select a different type of connection!${NC}'" ERR
 unset http_proxy
 unset https_proxy
 
@@ -45,25 +44,18 @@ function choose_from_menu() {
     printf -v $outvar "${options[$cur]}"
 }
 selections=(
-"Direct"
-"Proxy1"
-"Proxy2"
-"Proxy3"
-"FOD"
-"Shecan-DNS"
-"403-DNS"
+"direct"
+"proxy1"
+"proxy2"
+"proxy3"
+"fod"
+"shecan-dns"
+"403-dns"
 )
 if [[ "$1" != '' ]]; then
     TOKEN=$1
 else
     read -p "Enter TOKEN: " TOKEN
-fi
-
-current_username=$(whoami)
-
-if [[ "$current_username" != 'root' ]]; then
-    echo -e "${RED}User is not root!${NC}"
-    exit 10
 fi
 
 if [[ $(uname -a) == *Ubuntu* ]]; then
@@ -110,36 +102,28 @@ if [ "$COUNTRY" = "IR" ]; then
     if [[ "$2" != '' ]]; then
         TYPE_OF_CONNECT=$2
     else
-        echo "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Type of connections are used for connect your server to chabokan server
-assistant.You can choose from various connection types. If you encounter
-any issues, simply try running the command again with a different
-type of connection. For more detailed instructions, please refer to
-the Chabokan documentation:
-https://docs.chabokan.net/server-assistant/setup/
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
         choose_from_menu "Please select Type of Connect:" TYPE_OF_CONNECT "${selections[@]}"
     fi
 
     echo -e "${GREEN}Type of Connect: ${TYPE_OF_CONNECT} ${NC}"
     
-    if [ $TYPE_OF_CONNECT = "Proxy1" ]; then
+    if [ $TYPE_OF_CONNECT = "proxy1" ]; then
       echo -e "${GREEN}set type of connect proxy1 ...${NC}"
       export http_proxy='http://wraygnbd:eqj5y20wjznk@proxy.chabokan-two.ir:6322'
       export https_proxy='http://wraygnbd:eqj5y20wjznk@proxy.chabokan-two.ir:6322'
-    elif [ $TYPE_OF_CONNECT = "Proxy2" ]; then
+    elif [ $TYPE_OF_CONNECT = "proxy2" ]; then
       echo -e "${GREEN}set type of connect proxy2 ...${NC}"
       export http_proxy='http://wraygnbd:eqj5y20wjznk@proxy2.chabokan-two.ir:6405'
       export https_proxy='http://wraygnbd:eqj5y20wjznk@proxy2.chabokan-two.ir:6405'
-    elif [ $TYPE_OF_CONNECT = "Proxy3" ]; then
+    elif [ $TYPE_OF_CONNECT = "proxy3" ]; then
       echo -e "${GREEN}set type of connect proxy3 ...${NC}"
       export http_proxy='http://wraygnbd:eqj5y20wjznk@proxy3.chabokan-two.ir:6247'
       export https_proxy='http://wraygnbd:eqj5y20wjznk@proxy3.chabokan-two.ir:6247'
-    elif [ $TYPE_OF_CONNECT = "FOD" ]; then
+    elif [ $TYPE_OF_CONNECT = "fod" ]; then
       echo -e "${GREEN}set type of connect fod ...${NC}"
       export http_proxy='http://fodev.org:8118'
       export https_proxy='http://fodev.org:8118'
-    elif [ $TYPE_OF_CONNECT = "Shecan-DNS" ]; then
+    elif [ $TYPE_OF_CONNECT = "shecan-dns" ]; then
       echo -e "${GREEN}add shecan dns ...${NC}"
       rm /etc/resolv.conf
       cat >/etc/resolv.conf <<EOF
@@ -147,7 +131,7 @@ options timeout:1
 nameserver 178.22.122.100
 nameserver 185.51.200.2
 EOF
-    elif [ $TYPE_OF_CONNECT = "403-DNS" ]; then
+    elif [ $TYPE_OF_CONNECT = "403-dns" ]; then
       echo -e "${GREEN}add 403 dns ...${NC}"
       rm /etc/resolv.conf
       cat >/etc/resolv.conf <<EOF
@@ -285,3 +269,10 @@ response=$(curl -X POST -H "Content-Type: application/json" -d "" "$url")
 
 # Print the response
 echo "Response: $response"
+
+
+message_on_error() {
+  echo "run the command again and select a different type of connect !!!"
+}
+
+trap message_on_error ERR
