@@ -62,7 +62,7 @@ fi
 current_username=$(whoami)
 
 if [[ "$current_username" != 'root' ]]; then
-    echo -e "${RED}User is not root!${NC}"
+    echo -e "${RED}User is not root !${NC}"
     exit 10
 fi
 
@@ -73,6 +73,13 @@ else
     exit 1
 fi
 
+echo -e "${GREEN}add base dns ...${NC}"
+    rm /etc/resolv.conf
+    cat >/etc/resolv.conf <<EOF
+options timeout:1
+nameserver 8.8.8.8
+nameserver 1.1.1.1
+EOF
 
 SERVER_IP=$(hostname -I | awk '{print $1}')
 IP_CHECK_URL="https://api.country.is/$SERVER_IP"
@@ -97,14 +104,6 @@ ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 echo -e "${GREEN}disable systemd resolved ...${NC}"
 systemctl disable systemd-resolved.service
 systemctl stop systemd-resolved
-
-echo -e "${GREEN}add base dns ...${NC}"
-    rm /etc/resolv.conf
-    cat >/etc/resolv.conf <<EOF
-options timeout:1
-nameserver 8.8.8.8
-nameserver 1.1.1.1
-EOF
 
 if [ "$COUNTRY" = "IR" ]; then
     if [[ "$2" != '' ]]; then
