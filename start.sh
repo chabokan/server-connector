@@ -290,10 +290,10 @@ if [ "$jsonresponse" == "true" ]; then
   echo -e "${GREEN}------------ Node connected to chabokan successfully ------------${NC}"
 
 elif [ "$jsonresponse" == "false" ]; then
-  message=$(echo "$response" | jq -r '.response.message[]')
+  message=$(echo "'$response'" | jq -r '.response.message[]')
   echo -e "${RED}Error:$message${NC}"
 else
-  message=$(echo "$response" | jq -r '.message')
+  message=$(echo "'$response'" | jq -r '.message')
   echo -e "${YELLOW}Error:$message${NC}"
 fi
 
