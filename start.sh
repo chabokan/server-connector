@@ -157,12 +157,10 @@ EOF
     fi
     echo -e "${GREEN}change server repo ...${NC}"
     sed -i 's/http:\/\/archive.ubuntu.com/http:\/\/ir.archive.ubuntu.com/g' /etc/apt/sources.list
-    sed -i 's/http:\/\/security.ubuntu.com/http:\/\/ir.archive.ubuntu.com/g' /etc/apt/sources.list
     sed -i 's/http:\/\/[a-z]*.archive.ubuntu.com/http:\/\/ir.archive.ubuntu.com/g' /etc/apt/sources.list
     sed -i 's/http:\/\/[a-z]*.[a-z]*.archive.ubuntu.com/http:\/\/ir.archive.ubuntu.com/g' /etc/apt/sources.list
     sed -i 's/http:\/\/[a-z]*.[a-z]*.[a-z]*.archive.ubuntu.com/http:\/\/ir.archive.ubuntu.com/g' /etc/apt/sources.list
     sed -i 's/http:\/\/[a-z]*.[a-z]*.[a-z]*.[a-z]*.archive.ubuntu.com/http:\/\/ir.archive.ubuntu.com/g' /etc/apt/sources.list
-    sed -i 's/http:\/\/[a-z]*.security.ubuntu.com/http:\/\/ir.archive.ubuntu.com/g' /etc/apt/sources.list
 fi
 
 echo -e "${GREEN}updating os ...${NC}"
