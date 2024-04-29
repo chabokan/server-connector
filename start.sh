@@ -176,7 +176,7 @@ sysctl -w net.ipv6.conf.lo.disable_ipv6=1
 sysctl -p
 
 echo -e "${GREEN}install useful packages ....${NC}"
-DEBIAN_FRONTEND=noninteractive apt install -y iptables-persistent sqlite3 pigz nano vsftpd vim htop net-tools iputils-ping apache2-utils rkhunter supervisor net-tools htop fail2ban wget zip nmap git letsencrypt build-essential iftop dnsutils python3-pip dsniff grepcidr iotop rsync atop software-properties-common
+DEBIAN_FRONTEND=noninteractive apt install -y iptables-persistent sqlite3 pigz nano jq vsftpd vim htop net-tools iputils-ping apache2-utils rkhunter supervisor net-tools htop fail2ban wget zip nmap git letsencrypt build-essential iftop dnsutils python3-pip dsniff grepcidr iotop rsync atop software-properties-common
 git config --global credential.helper store
 
 debconf-set-selections <<EOF
@@ -284,4 +284,16 @@ url="http://0.0.0.0:8123/api/v1/connect/?token=${TOKEN}"
 response=$(curl -X POST -H "Content-Type: application/json" -d "" "$url")
 
 # Print the response
-echo "Response: $response"
+jsonresponse=$(echo "'$response'" | jq -r '.success')
+
+if [ "$jsonresponse" == "true" ]; then
+  echo -e "${GREEN}------------ Node connected to chabokan successfully ------------${NC}"
+
+elif [ "$jsonresponse" == "false" ]; then
+  message=$(echo "$response" | jq -r '.response.message[]')
+  echo -e "${RED}Error:$message${NC}"
+else
+  message=$(echo "$response" | jq -r '.message')
+  echo -e "${YELLOW}Error:$message${NC}"
+fi
+
