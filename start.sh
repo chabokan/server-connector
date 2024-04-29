@@ -284,4 +284,24 @@ url="http://0.0.0.0:8123/api/v1/connect/?token=${TOKEN}"
 response=$(curl -X POST -H "Content-Type: application/json" -d "" "$url")
 
 # Print the response
-echo "Response: $response"
+success_response=$(echo $response | jq -r '.success')
+
+message_response=$(echo $response | jq -r '.response.message')
+
+if [ "$success_response" == "true" ]; then
+  echo -e "${GREEN}------------ Node connected to chabokan successfully ------------${NC}"
+
+elif [ "$success_response" == "false" ]; then
+
+  if [ "$message_response"  == "null" ]; then
+     message=$(echo $response | jq -r '.message')
+     echo -e "${YELLOW}Error:$message${NC}"
+  else
+     message=$(echo $response | jq -r '.response.message[]')
+     echo -e "${RED}Error: $message${NC}"
+  fi
+
+else
+  echo -e "${RED}$response${NC}"
+fi
+
