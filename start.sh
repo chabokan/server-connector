@@ -5,11 +5,15 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 NC='\033[0m' # No Color
+
 set -e
+# Eror handeling
 trap "echo -e '${RED}ERROR: Run the command again and select a different type of connection!${NC}'" ERR
+
 unset http_proxy
 unset https_proxy
 
+# Type of connection menu
 function choose_from_menu() {
     local prompt="$1" outvar="$2"
     shift
@@ -53,23 +57,72 @@ selections=(
 "Shecan-DNS"
 "403-DNS"
 )
+
+
 if [[ "$1" != '' ]]; then
     TOKEN=$1
 else
     read -p "Enter TOKEN: " TOKEN
 fi
 
-current_username=$(whoami)
+# check root user
+[[ $EUID -ne 0 ]] && echo -e "${RED}Fatal error: ${NC} Please run command with root privilege \n " && exit 1
 
-if [[ "$current_username" != 'root' ]]; then
-    echo -e "${RED}User is not root !${NC}"
-    exit 10
-fi
 
-if [[ $(uname -a) == *Ubuntu* ]]; then
-        echo -e "${GREEN}YES! This is Ubuntu.${NC}"
+# Check OS and set release variable
+if [[ -f /etc/os-release ]]; then
+    source /etc/os-release
+    release=$ID
+elif [[ -f /usr/lib/os-release ]]; then
+    source /usr/lib/os-release
+    release=$ID
 else
-    echo -e "${RED}Sorry! This operating system does not supported.${NC}"
+    echo "${RED}Failed to check the system OS, please contact the server author!${NC}" >&2
+    exit 1
+fi
+echo "The OS is: $release"
+
+# check cpu arch
+#arch() {
+#    case "$(uname -m)" in
+#    x86_64 | x64 | amd64) echo 'amd64' ;;
+#    i*86 | x86) echo '386' ;;
+#    armv8* | armv8 | arm64 | aarch64) echo 'arm64' ;;
+#    armv7* | armv7 | arm) echo 'armv7' ;;
+#    armv6* | armv6) echo 'armv6' ;;
+#    armv5* | armv5) echo 'armv5' ;;
+#    s390x) echo 's390x' ;;
+#    *) echo -e "${RED}Unsupported CPU architecture! ${NC}" && rm -f install.sh && exit 1 ;;
+#    esac
+#}
+#echo "${GREEN}CPU arch: $(arch)${NC}"
+
+os_version=""
+os_version=$(grep -i version_id /etc/os-release | cut -d \" -f2 | cut -d . -f1)
+
+if [[ "${release}" == "ubuntu" ]]; then
+    if [[ ${os_version} -lt 16 ]]; then
+        echo -e "${RED} Please use Ubuntu 16 or higher ${NC}\n" && exit 1
+    fi
+#elif [[ "${release}" == "centos" ]]; then
+#    if [[ ${os_version} -lt  7 ]]; then
+#        echo -e "${RED} Please use Centos 7 or higher version!${NC}\n" && exit 1
+#    fi
+elif [[ "${release}" == "debian" ]]; then
+    if [[ ${os_version} -lt 11 ]]; then
+        echo -e "${RED} Please use Debian 11 or higher ${NC}\n" && exit 1
+    fi
+#elif [[ "${release}" == "rocky" ]]; then
+#    if [[ ${os_version} -lt 8 ]]; then
+#        echo -e "${RED} Please use Rocky Linux 8 or higher ${NC}\n" && exit 1
+#    fi
+else
+    echo -e "${RED}Your operating system is not supported by this script.${NC}\n"
+    echo "Please ensure you are using one of the following supported operating systems:"
+    echo "- Ubuntu 16.04+"
+    echo "- Debian 11+"
+#    echo "- CentOS 7+"
+#    echo "- Rocky 8+"
     exit 1
 fi
 
@@ -94,17 +147,15 @@ COUNTRY=$(echo "$CHECK_IP" | grep -o -P '"country":"\K[^"]+' | tr -d \")
 echo -e "${GREEN}Server IP: ${SERVER_IP} ${NC}"
 echo -e "${GREEN}Server Country: ${COUNTRY} ${NC}"
 
-UBUNTU_VERSION=$(lsb_release -c)
-UBUNTU_VERSION=${UBUNTU_VERSION#*:}
-
 echo -e "${GREEN}set Tehran Timezone ...${NC}"
 TZ=Asia/Tehran
 ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
+if [ "$release" = "ubuntu" ]; then
 echo -e "${GREEN}disable systemd resolved ...${NC}"
 systemctl disable systemd-resolved.service
 systemctl stop systemd-resolved
-
+fi
 if [ "$COUNTRY" = "IR" ]; then
     if [[ "$2" != '' ]]; then
         TYPE_OF_CONNECT=$2
@@ -155,6 +206,7 @@ nameserver 10.202.10.202
 nameserver 10.202.10.102
 EOF
     fi
+    cp /usr/share/doc/apt/examples/sources.list /etc/apt/sources.list
     echo -e "${GREEN}change server repo ...${NC}"
     sed -i 's/http:\/\/archive.ubuntu.com/http:\/\/ir.archive.ubuntu.com/g' /etc/apt/sources.list
     sed -i 's/http:\/\/[a-z]*.archive.ubuntu.com/http:\/\/ir.archive.ubuntu.com/g' /etc/apt/sources.list
@@ -164,7 +216,23 @@ EOF
 fi
 
 echo -e "${GREEN}updating os ...${NC}"
-apt update -y
+
+install_base() {
+
+    case "${release}" in
+    centos | rocky)
+        yum -y update
+        ;;
+    ubuntu | debian)
+        apt update -y
+        ;;
+    *)
+        echo "Wrong OS ..."
+        exit 1
+        ;;
+
+    esac
+}
 
 echo -e "${GREEN}disable ipv6 ...${NC}"
 sysctl -w net.ipv6.conf.all.disable_ipv6=1
@@ -173,6 +241,7 @@ sysctl -w net.ipv6.conf.lo.disable_ipv6=1
 sysctl -p
 
 echo -e "${GREEN}install useful packages ....${NC}"
+apt --fix-broken install
 DEBIAN_FRONTEND=noninteractive apt install -y iptables-persistent sqlite3 pigz nano jq vsftpd vim htop net-tools iputils-ping apache2-utils rkhunter supervisor net-tools htop fail2ban wget zip nmap git letsencrypt build-essential iftop dnsutils python3-pip dsniff grepcidr iotop rsync atop software-properties-common
 git config --global credential.helper store
 
@@ -182,33 +251,60 @@ iptables-persistent iptables-persistent/autosave_v6 boolean true
 EOF
 
 echo -e "${GREEN}install docker ....${NC}"
-for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do sudo apt-get remove $pkg; done
-apt-get update
-DEBIAN_FRONTEND=noninteractive apt install -y ca-certificates curl gnupg
-install -m 0755 -d /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --batch --yes --dearmor -o /etc/apt/keyrings/docker.gpg
-chmod a+r /etc/apt/keyrings/docker.gpg
+if [[ "${release}" == "ubuntu" ]]; then
+    for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do sudo apt-get remove $pkg; done
+    apt update -y
+    DEBIAN_FRONTEND=noninteractive apt install -y ca-certificates curl gnupg
+    install -m 0755 -d /etc/apt/keyrings
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --batch --yes --dearmor -o /etc/apt/keyrings/docker.gpg
+    chmod a+r /etc/apt/keyrings/docker.gpg
 
-echo \
-  "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-  "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
-  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-apt-get update
+    echo \
+      "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+      "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+      sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    apt-get update
 
-if [ $UBUNTU_VERSION = "focal" ]; then
-    VERSION_STRING=5:25.0.3-1~ubuntu.20.04~focal
-    DEBIAN_FRONTEND=noninteractive apt install -y docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plugin
-elif [ $UBUNTU_VERSION = "jammy" ]; then
-    VERSION_STRING=5:25.0.3-1~ubuntu.22.04~jammy
-    DEBIAN_FRONTEND=noninteractive apt install -y docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plugin
-else
-    echo -e "${RED} not proper version, please check your ubuntu version first.${NC}"
-    exit 1
+    if [ $os_version = "20" ]; then
+        VERSION_STRING=5:25.0.3-1~ubuntu.20.04~focal
+        DEBIAN_FRONTEND=noninteractive apt install -y docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plugin
+    elif [ $os_version = "22" ]; then
+        VERSION_STRING=5:25.0.3-1~ubuntu.22.04~jammy
+        DEBIAN_FRONTEND=noninteractive apt install -y docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plugin
+    else
+        echo -e "${RED} not proper version, please check your ubuntu version first.${NC}"
+        exit 1
+    fi
+    apt-mark hold docker-ce docker-ce-cli
+
+    apt purge postfix -y
+elif [[ "${release}" == "debian" ]]; then
+    for pkg in docker.io docker-doc docker-compose podman-docker containerd runc; do apt-get remove $pkg; done
+    apt update -y
+    DEBIAN_FRONTEND=noninteractive apt install -y ca-certificates curl gnupg
+    install -m 0755 -d /etc/apt/keyrings
+    curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+    chmod a+r /etc/apt/keyrings/docker.asc
+
+    echo \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian \
+      $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+      tee /etc/apt/sources.list.d/docker.list > /dev/null
+    apt update
+    if [ $os_version = "12" ]; then
+        VERSION_STRING=5:25.0.3-1~debian.12~bookworm
+        DEBIAN_FRONTEND=noninteractive apt install -y docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plugin
+    elif [ $os_version = "11" ]; then
+       VERSION_STRING=5:25.0.3-1~debian.11~bullseye
+       DEBIAN_FRONTEND=noninteractive apt install -y docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin doc>
+    else
+        echo -e "${RED} not proper version, please check your debian version first.${NC}"
+        exit 1
+    fi
+    apt-mark hold docker-ce docker-ce-cli
+
+    apt purge postfix -y
 fi
-apt-mark hold docker-ce docker-ce-cli
-
-apt purge postfix -y
-
 mkdir -p /builds
 mkdir -p /storage
 mkdir -p /backups
@@ -221,9 +317,15 @@ rm -rf /var/ch-manager
 git clone https://github.com/chabokan/node-manager /var/ch-manager
 cd /var/ch-manager/
 
+if [ "$release" = "ubuntu" ]; then
 pip3 install -r requirements.txt
 sleep 2
 pip3 install -r requirements.txt
+elif [ "$release" = "debian" ]; then
+pip3 install --break-system-packages -r requirements.txt
+sleep 2
+pip3 install --break-system-packages -r requirements.txt
+fi
 
 if [ $COUNTRY = "IR" ]; then
   unset http_proxy
@@ -301,4 +403,3 @@ elif [ "$success_response" == "false" ]; then
 else
   echo -e "${RED}$response${NC}"
 fi
-
