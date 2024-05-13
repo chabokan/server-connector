@@ -217,22 +217,12 @@ fi
 
 echo -e "${GREEN}updating os ...${NC}"
 
-install_base() {
 
-    case "${release}" in
-    centos | rocky)
-        yum -y update
-        ;;
-    ubuntu | debian)
-        apt update -y
-        ;;
-    *)
-        echo "Wrong OS ..."
-        exit 1
-        ;;
-
-    esac
-}
+if [ "$release" = "ubuntu" ]; then
+sudo apt update -y
+elif [ "$release" = "debian" ]; then
+apt update -y
+fi
 
 echo -e "${GREEN}disable ipv6 ...${NC}"
 sysctl -w net.ipv6.conf.all.disable_ipv6=1
