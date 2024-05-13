@@ -286,7 +286,7 @@ elif [[ "${release}" == "debian" ]]; then
         DEBIAN_FRONTEND=noninteractive apt install -y docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plugin
     elif [ $os_version = "11" ]; then
        VERSION_STRING=5:25.0.3-1~debian.11~bullseye
-       DEBIAN_FRONTEND=noninteractive apt install -y docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin doc>
+       DEBIAN_FRONTEND=noninteractive apt install -y docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plugin
     else
         echo -e "${RED} not proper version, please check your debian version first.${NC}"
         exit 1
