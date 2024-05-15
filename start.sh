@@ -196,11 +196,7 @@ if [ "$release" = "debian" ]; then
 apt --fix-broken install
 fi
 
-if [ $os_version = "22" ]; then
-apt install default-mysql-client
-fi
-
-DEBIAN_FRONTEND=noninteractive apt install -y iptables-persistent sqlite3 pigz nano jq vsftpd vim htop net-tools iputils-ping apache2-utils rkhunter supervisor net-tools htop fail2ban wget zip nmap git letsencrypt build-essential iftop dnsutils python3-pip dsniff grepcidr iotop rsync atop software-properties-common
+DEBIAN_FRONTEND=noninteractive apt install -y iptables-persistent sqlite3 pigz default-mysql-client nano jq vsftpd vim htop net-tools iputils-ping apache2-utils rkhunter supervisor net-tools htop fail2ban wget zip nmap git letsencrypt build-essential iftop dnsutils python3-pip dsniff grepcidr iotop rsync atop software-properties-common
 git config --global credential.helper store
 
 debconf-set-selections <<EOF
