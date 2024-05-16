@@ -86,25 +86,15 @@ if [[ "${release}" == "ubuntu" ]]; then
     if [[ ${os_version} -lt 16 ]]; then
         echo -e "${RED} Please use Ubuntu 16 or higher ${NC}\n" && exit 1
     fi
-#elif [[ "${release}" == "centos" ]]; then
-#    if [[ ${os_version} -lt  7 ]]; then
-#        echo -e "${RED} Please use Centos 7 or higher version!${NC}\n" && exit 1
-#    fi
 elif [[ "${release}" == "debian" ]]; then
     if [[ ${os_version} -lt 11 ]]; then
         echo -e "${RED} Please use Debian 11 or higher ${NC}\n" && exit 1
     fi
-#elif [[ "${release}" == "rocky" ]]; then
-#    if [[ ${os_version} -lt 8 ]]; then
-#        echo -e "${RED} Please use Rocky Linux 8 or higher ${NC}\n" && exit 1
-#    fi
 else
     echo -e "${RED}Your operating system is not supported by this script.${NC}\n"
     echo "Please ensure you are using one of the following supported operating systems:"
     echo "- Ubuntu 16.04+"
     echo "- Debian 11+"
-#    echo "- CentOS 7+"
-#    echo "- Rocky 8+"
     exit 1
 fi
 
