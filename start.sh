@@ -26,15 +26,11 @@ else
 fi
 echo "The OS is: $release"
 
-cd /var/server-connector
-git clone 
+cd /var
+git clone https://github.com/chabokan/server-connector.git
 
 if [ "$release" = "ubuntu" ]; then
-    cd /tmp
-    wget https://raw.githubusercontent.com/chabokan/server-connector/main/ubuntu.sh -O ubuntu.sh
-    bash ubuntu.sh $1
+    bash /var/server-connector/ubuntu.sh $1
 elif [ "$release" = "debian" ]; then
-    cd /tmp
-    wget https://raw.githubusercontent.com/chabokan/server-connector/main/debian.sh -O debian.sh
-    bash debian.sh $1
+    bash /var/server-connector/debian.sh $1
 fi

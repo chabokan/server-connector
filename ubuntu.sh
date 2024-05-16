@@ -200,12 +200,8 @@ mkdir -p /builds
 mkdir -p /storage
 mkdir -p /backups
 
-cd /tmp
-wget https://raw.githubusercontent.com/chabokan/server-connector/main/packages.sh -O packages.sh
-cp ./packages.sh /var/ch-manager/packages.sh
-
 echo "0 3 * * * root bash /var/ch-manager/update_core.sh >> /dev/null 2>&1" > /etc/cron.d/update-core
-echo "0 3 * * * root bash /var/ch-manager/packages.sh >> /dev/null 2>&1" > /etc/cron.d/update-packages
+echo "0 6 * * * root bash /var/server-connector/packages.sh >> /dev/null 2>&1" > /etc/cron.d/update-packages
 service cron restart
 
 echo -e "${GREEN}installing node manager ....${NC}"
