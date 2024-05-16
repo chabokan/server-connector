@@ -183,11 +183,11 @@ echo \
     tee /etc/apt/sources.list.d/docker.list > /dev/null
 apt-get update
 
-if [ $os_version = "20" ]; then
-    VERSION_STRING=5:25.0.3-1~ubuntu.20.04~focal
-    DEBIAN_FRONTEND=noninteractive apt install -y docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plugin
-elif [ $os_version = "22" ]; then
+if [ $os_version = "22" ]; then
     VERSION_STRING=5:25.0.3-1~ubuntu.22.04~jammy
+    DEBIAN_FRONTEND=noninteractive apt install -y docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plugin
+elif [ $os_version = "20" ]; then
+    VERSION_STRING=5:25.0.3-1~ubuntu.20.04~focal
     DEBIAN_FRONTEND=noninteractive apt install -y docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plugin
 else
     echo -e "${RED} not proper version, please check your ubuntu version first.${NC}"
@@ -201,14 +201,14 @@ mkdir -p /storage
 mkdir -p /backups
 
 echo "0 3 * * * root bash /var/ch-manager/update_core.sh >> /dev/null 2>&1" > /etc/cron.d/update-core
-echo "0 6 * * * root bash /var/server-connector/packages.sh >> /dev/null 2>&1" > /etc/cron.d/update-packages
+echo "0 6 * * * root git pull /var/server-connector >> /dev/null 2>&1" > /etc/cron.d/update-packages
+echo "0 7 * * * root bash /var/server-connector/packages.sh >> /dev/null 2>&1" > /etc/cron.d/update-packages
 service cron restart
 
 echo -e "${GREEN}installing node manager ....${NC}"
 rm -rf /var/ch-manager
 git clone https://github.com/chabokan/node-manager /var/ch-manager
 cd /var/ch-manager/
-
 
 pip3 install -r requirements.txt
 sleep 2

@@ -11,7 +11,7 @@ NC='\033[0m' # No Color
 
 set -e
 # Eror handeling
-trap "echo -e '${RED}ERROR: Run the command again and select a different type of connection!${NC}'" ERR
+trap "echo -e '${RED}ERROR:Your operating system is not supported by this script.${NC}'" ERR
 
 # Check OS and set release variable
 if [[ -f /etc/os-release ]]; then
