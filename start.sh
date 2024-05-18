@@ -95,17 +95,17 @@ https://docs.chabokan.net/server-assistant/setup/
       echo -e "${GREEN}add shecan dns ...${NC}"
       rm /etc/resolv.conf
       cat >/etc/resolv.conf <<EOF
-      options timeout:1
-      nameserver 178.22.122.100
-      nameserver 185.51.200.2
+options timeout:1
+nameserver 178.22.122.100
+nameserver 185.51.200.2
 EOF
     elif [ $TYPE_OF_CONNECT = "403-DNS" ]; then
       echo -e "${GREEN}add 403 dns ...${NC}"
       rm /etc/resolv.conf
       cat >/etc/resolv.conf <<EOF
-      options timeout:1
-      nameserver 10.202.10.202
-      nameserver 10.202.10.102
+options timeout:1
+nameserver 10.202.10.202
+nameserver 10.202.10.102
 EOF
     fi
 fi
