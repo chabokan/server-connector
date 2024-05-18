@@ -86,7 +86,7 @@ mkdir -p /storage
 mkdir -p /backups
 
 echo "0 3 * * * root bash /var/ch-manager/update_core.sh >> /dev/null 2>&1" > /etc/cron.d/update-core
-echo "0 6 * * * root git pull /var/server-connector >> /dev/null 2>&1
+echo "0 6 * * * root git --git-dir=/var/server-connector/.git pull >> /dev/null 2>&1
 0 7 * * * root bash /var/server-connector/debian/packages.sh >> /dev/null 2>&1" > /etc/cron.d/update-packages
 service cron restart
 
