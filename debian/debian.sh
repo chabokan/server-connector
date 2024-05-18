@@ -26,9 +26,9 @@ fi
 echo -e "${GREEN}add base dns ...${NC}"
     rm /etc/resolv.conf
     cat >/etc/resolv.conf <<EOF
-    options timeout:1
-    nameserver 8.8.8.8
-    nameserver 1.1.1.1
+options timeout:1
+nameserver 8.8.8.8
+nameserver 1.1.1.1
 EOF
 
 echo -e "${GREEN}set Tehran Timezone ...${NC}"
@@ -141,9 +141,9 @@ if [ $COUNTRY = "IR" ]; then
 echo -e "${GREEN}add shecan dns ...${NC}"
     rm /etc/resolv.conf
     cat >/etc/resolv.conf <<EOF
-    options timeout:1
-    nameserver 178.22.122.100
-    nameserver 185.51.200.2
+options timeout:1
+nameserver 178.22.122.100
+nameserver 185.51.200.2
 EOF
 fi
 
