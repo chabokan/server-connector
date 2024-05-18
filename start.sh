@@ -10,11 +10,17 @@ NC='\033[0m' # No Color
 [[ $EUID -ne 0 ]] && echo -e "${RED}Fatal error: ${NC} Please run command with root privilege \n " && exit 1
 
 set -e
-# Eror handeling
-trap "echo -e '${RED}ERROR:Your operating system is not supported by this script.${NC}'" ERR
 
 unset http_proxy
 unset https_proxy
+
+echo -e "${GREEN}add base dns ...${NC}"
+    rm /etc/resolv.conf
+    cat >/etc/resolv.conf <<EOF
+options timeout:1
+nameserver 8.8.8.8
+nameserver 1.1.1.1
+EOF
 
 # Type of connection menu
 function choose_from_menu() {

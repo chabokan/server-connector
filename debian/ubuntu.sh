@@ -23,14 +23,6 @@ if [ $os_version -lt 16 ]; then
     echo -e "${RED} Please use Ubuntu 16 or higher ${NC}\n" && exit 1
 fi
 
-echo -e "${GREEN}add base dns ...${NC}"
-    rm /etc/resolv.conf
-    cat >/etc/resolv.conf <<EOF
-options timeout:1
-nameserver 8.8.8.8
-nameserver 1.1.1.1
-EOF
-
 echo -e "${GREEN}set Tehran Timezone ...${NC}"
 TZ=Asia/Tehran
 ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
