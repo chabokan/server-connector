@@ -58,7 +58,6 @@ selections=(
 "403-DNS"
 )
 
-
 SERVER_IP=$(hostname -I | awk '{print $1}')
 IP_CHECK_URL="https://api.country.is/$SERVER_IP"
 CHECK_IP=$(curl -s "$IP_CHECK_URL")
@@ -71,7 +70,6 @@ export COUNTRY=$(echo "$CHECK_IP" | grep -o -P '"country":"\K[^"]+' | tr -d \")
 
 echo -e "${GREEN}Server IP: ${SERVER_IP} ${NC}"
 echo -e "${GREEN}Server Country: ${COUNTRY} ${NC}"
-
 
 if [ "$COUNTRY" = "IR" ]; then
     if [[ "$2" != '' ]]; then
@@ -100,7 +98,7 @@ https://docs.chabokan.net/server-assistant/setup/
       options timeout:1
       nameserver 178.22.122.100
       nameserver 185.51.200.2
-    EOF
+EOF
     elif [ $TYPE_OF_CONNECT = "403-DNS" ]; then
       echo -e "${GREEN}add 403 dns ...${NC}"
       rm /etc/resolv.conf
@@ -108,11 +106,11 @@ https://docs.chabokan.net/server-assistant/setup/
       options timeout:1
       nameserver 10.202.10.202
       nameserver 10.202.10.102
-    EOF
+EOF
     fi
 fi
 
-
+rm -fr /var/server-connector/
 cd /var
 git clone https://github.com/chabokan/server-connector.git
 
@@ -128,6 +126,7 @@ else
     echo "${RED}Failed to check the system OS, please contact the server author!${NC}" >&2
     exit 1
 fi
+
 echo "The OS is: $release"
 
 if [ "$release" = "ubuntu" ]; then

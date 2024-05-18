@@ -19,14 +19,8 @@ fi
 os_version=""
 os_version=$(grep -i version_id /etc/os-release | cut -d \" -f2 | cut -d . -f1)
 
-if [[ ${os_version} -lt 16 ]]; then
+if [ $os_version -lt 16 ]; then
     echo -e "${RED} Please use Ubuntu 16 or higher ${NC}\n" && exit 1
-else
-    echo -e "${RED}Your operating system is not supported by this script.${NC}\n"
-    echo "Please ensure you are using one of the following supported operating systems:"
-    echo "- Ubuntu 16.04+"
-    echo "- Debian 11+"
-    exit 1
 fi
 
 echo -e "${GREEN}add base dns ...${NC}"
