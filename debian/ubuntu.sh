@@ -74,6 +74,12 @@ if [ $os_version = "22" ]; then
 elif [ $os_version = "20" ]; then
     VERSION_STRING=5:25.0.3-1~ubuntu.20.04~focal
     DEBIAN_FRONTEND=noninteractive apt install -y docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plugin
+elif [ $os_version = "18" ]; then
+    VERSION_STRING=5:24.0.2-1~ubuntu.18.04~bionic
+    DEBIAN_FRONTEND=noninteractive apt install -y docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plugin
+elif [ $os_version = "16" ]; then
+    VERSION_STRING=5:24.0.2-1~ubuntu.18.04~bionic
+    DEBIAN_FRONTEND=noninteractive apt install -y docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plugin
 else
     echo -e "${RED} not proper version, please check your ubuntu version first.${NC}"
     exit 1
