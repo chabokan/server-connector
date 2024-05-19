@@ -19,8 +19,8 @@ fi
 os_version=""
 os_version=$(grep -i version_id /etc/os-release | cut -d \" -f2 | cut -d . -f1)
 
-if [ $os_version -lt 16 ]; then
-    echo -e "${RED} Please use Ubuntu 16 or higher ${NC}\n" && exit 1
+if [ $os_version -lt 20 ]; then
+    echo -e "${RED} Please use Ubuntu 20 or higher ${NC}\n" && exit 1
 fi
 
 echo -e "${GREEN}set Tehran Timezone ...${NC}"
@@ -73,12 +73,6 @@ if [ $os_version = "22" ]; then
     DEBIAN_FRONTEND=noninteractive apt install -y docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plugin
 elif [ $os_version = "20" ]; then
     VERSION_STRING=5:25.0.3-1~ubuntu.20.04~focal
-    DEBIAN_FRONTEND=noninteractive apt install -y docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plugin
-elif [ $os_version = "18" ]; then
-    VERSION_STRING=5:24.0.2-1~ubuntu.18.04~bionic
-    DEBIAN_FRONTEND=noninteractive apt install -y docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plugin
-elif [ $os_version = "16" ]; then
-    VERSION_STRING=5:24.0.2-1~ubuntu.18.04~bionic
     DEBIAN_FRONTEND=noninteractive apt install -y docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plugin
 else
     echo -e "${RED} not proper version, please check your ubuntu version first.${NC}"
