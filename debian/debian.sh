@@ -56,9 +56,16 @@ echo -e "${GREEN}installing node manager ....${NC}"
 rm -rf /var/ch-manager
 git clone https://github.com/chabokan/node-manager /var/ch-manager
 cd /var/ch-manager/
-pip3 install --break-system-packages -r requirements.txt
-sleep 2
-pip3 install --break-system-packages -r requirements.txt
+if [ $os_version = "12" ]; then
+    pip3 install --break-system-packages -r requirements.txt
+    sleep 2
+    pip3 install --break-system-packages -r requirements.txt
+elif [ $os_version = "11" ]; then
+    pip3 install -r requirements.txt
+    sleep 2
+    pip3 install -r requirements.txt
+fi
+
 if [ $COUNTRY = "IR" ]; then
   unset http_proxy
   unset https_proxy
