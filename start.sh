@@ -22,6 +22,11 @@ nameserver 8.8.8.8
 nameserver 1.1.1.1
 EOF
 
+
+echo -e "${GREEN}set Tehran Timezone ...${NC}"
+TZ=Asia/Tehran
+ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 # Type of connection menu
 function choose_from_menu() {
     local prompt="$1" outvar="$2"
@@ -120,7 +125,6 @@ rm -fr /var/server-connector/
 cd /var
 git clone https://github.com/chabokan/server-connector.git
 
-
 # Check OS and set release variable
 if [[ -f /etc/os-release ]]; then
     source /etc/os-release
@@ -130,6 +134,25 @@ elif [[ -f /usr/lib/os-release ]]; then
     release=$ID
 else
     echo "${RED}Failed to check the system OS, please contact the server author!${NC}" >&2
+    exit 1
+fi
+
+os_version=""
+export os_version=$(grep -i version_id /etc/os-release | cut -d \" -f2 | cut -d . -f1)
+
+if [[ "${release}" == "ubuntu" ]]; then
+    if [[ ${os_version} -lt 20 ]]; then
+        echo -e "${RED} Please use Ubuntu 20 or higher ${NC}\n" && exit 1
+    fi
+elif [[ "${release}" == "debian" ]]; then
+    if [[ ${os_version} -lt 11 ]]; then
+        echo -e "${RED} Please use Debian 11 or higher ${NC}\n" && exit 1
+    fi
+else
+    echo -e "${RED}Your operating system is not supported by this script.${NC}\n"
+    echo "Please ensure you are using one of the following supported operating systems:"
+    echo "- Ubuntu 16.04+"
+    echo "- Debian 11+"
     exit 1
 fi
 
