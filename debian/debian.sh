@@ -25,9 +25,9 @@ bash /var/server-connector/debian/packages.sh
 
 echo -e "${GREEN}install docker ....${NC}"
 if [ $os_version = "12" ]; then
-    for pkg in docker.io docker-doc docker-compose podman-docker containerd runc; do sudo apt-get remove $pkg; done
+    for pkg in docker.io docker-doc docker-compose podman-docker containerd runc; do apt-get remove $pkg; done
 elif [ $os_version = "11" ]; then
-    for pkg in docker.io docker-doc docker-compose containerd runc; do sudo apt-get remove $pkg; done
+    for pkg in docker.io docker-doc docker-compose containerd runc; do apt-get remove $pkg; done
 fi
 apt-get update -y
 DEBIAN_FRONTEND=noninteractive apt install -y ca-certificates curl gnupg
