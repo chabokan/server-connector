@@ -77,7 +77,7 @@ docker compose down
 docker compose up -d
 declare -p | grep -Ev 'BASHOPTS|BASH_VERSINFO|EUID|PPID|SHELLOPTS|UID' > /.env
 
-bash /var/server-connector/debian/commands.sh
+bash /var/server-connector/debian/settings.sh
 
 bash /var/server-connector/utilities/firewall.sh
 
