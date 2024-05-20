@@ -164,13 +164,7 @@ rm -fr /var/server-connector/
 cd /var
 
 if [ "$release" = "ubuntu" ]; then
-    apt update -y
-    apt install git -y
-    git clone https://github.com/chabokan/server-connector.git
-    bash /var/server-connector/debian/ubuntu.sh
+    curl -s https://raw.githubusercontent.com/chabokan/server-connector/main/debian/ubuntu.sh > /tmp/ubuntu.sh && bash /tmp/ubuntu.sh
 elif [ "$release" = "debian" ]; then
-    apt update -y
-    apt install git -y
-    git clone https://github.com/chabokan/server-connector.git
-    bash /var/server-connector/debian/debian.sh
+    curl -shttps://raw.githubusercontent.com/chabokan/server-connector/main/debian/debian.sh > /tmp/debian.sh && bash /tmp/debian.sh
 fi
