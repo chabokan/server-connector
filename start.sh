@@ -22,6 +22,12 @@ nameserver 8.8.8.8
 nameserver 1.1.1.1
 EOF
 
+if [[ "$1" != '' ]]; then
+    TOKEN=$1
+else
+    read -p "Enter TOKEN: " TOKEN
+fi
+export TOKEN
 
 echo -e "${GREEN}set Tehran Timezone ...${NC}"
 TZ=Asia/Tehran
@@ -156,14 +162,6 @@ else
     echo "- Debian 11+"
     exit 1
 fi
-
-if [[ "$1" != '' ]]; then
-    TOKEN=$1
-else
-    read -p "Enter TOKEN: " TOKEN
-fi
-
-export TOKEN
  
 echo "The OS is: $release"
 
