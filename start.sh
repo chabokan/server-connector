@@ -77,7 +77,8 @@ if echo "$CHECK_IP" | grep -q "\"error\""; then
   exit 1
 fi
 
-export COUNTRY=$(echo "$CHECK_IP" | grep -o -P '"country":"\K[^"]+' | tr -d \")
+COUNTRY=$(echo "$CHECK_IP" | grep -o -P '"country":"\K[^"]+' | tr -d \")
+export COUNTRY
 
 echo -e "${GREEN}Server IP: ${SERVER_IP} ${NC}"
 echo -e "${GREEN}Server Country: ${COUNTRY} ${NC}"
