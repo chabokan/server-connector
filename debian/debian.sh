@@ -16,8 +16,6 @@ apt update -y
 
 
 echo -e "${GREEN}install useful packages ....${NC}"
-apt install git -y
-git clone https://github.com/chabokan/server-connector.git
 bash /var/server-connector/debian/packages.sh
 
 echo -e "${GREEN}install docker ....${NC}"
