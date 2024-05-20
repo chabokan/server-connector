@@ -128,9 +128,6 @@ EOF
     fi
 fi
 
-rm -fr /var/server-connector/
-cd /var
-git clone https://github.com/chabokan/server-connector.git
 
 # Check OS and set release variable
 if [[ -f /etc/os-release ]]; then
@@ -162,11 +159,19 @@ else
     echo "- Debian 11+"
     exit 1
 fi
- 
 echo "The OS is: $release"
 
+rm -fr /var/server-connector/
+cd /var
+
 if [ "$release" = "ubuntu" ]; then
+    apt update -y
+    apt install git
+    git clone https://github.com/chabokan/server-connector.git
     bash /var/server-connector/debian/ubuntu.sh
 elif [ "$release" = "debian" ]; then
+    apt update -y
+    apt install git
+    git clone https://github.com/chabokan/server-connector.git
     bash /var/server-connector/debian/debian.sh
 fi
