@@ -10,12 +10,6 @@ set -e
 # Eror handeling
 trap "echo -e '${RED}ERROR: Run the command again and select a different type of connection!${NC}'" ERR
 
-if [[ "$1" != '' ]]; then
-    TOKEN=$1
-else
-    read -p "Enter TOKEN: " TOKEN
-fi
-
 echo -e "${GREEN}disable systemd resolved ...${NC}"
 systemctl disable systemd-resolved.service
 systemctl stop systemd-resolved

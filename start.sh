@@ -156,10 +156,18 @@ else
     exit 1
 fi
 
+if [[ "$1" != '' ]]; then
+    TOKEN=$1
+else
+    read -p "Enter TOKEN: " TOKEN
+fi
+
+export TOKEN
+ 
 echo "The OS is: $release"
 
 if [ "$release" = "ubuntu" ]; then
-    bash /var/server-connector/debian/ubuntu.sh $1
+    bash /var/server-connector/debian/ubuntu.sh
 elif [ "$release" = "debian" ]; then
-    bash /var/server-connector/debian/debian.sh $1
+    bash /var/server-connector/debian/debian.sh
 fi
