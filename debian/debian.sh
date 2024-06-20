@@ -18,6 +18,10 @@ apt update -y
 echo -e "${GREEN}install useful packages ....${NC}"
 bash /var/server-connector/debian/packages.sh
 
+
+os_version=""
+export os_version=$(grep -i version_id /etc/os-release | cut -d \" -f2 | cut -d . -f1)
+
 echo -e "${GREEN}install docker ....${NC}"
 if [ $os_version = "12" ]; then
     for pkg in docker.io docker-doc docker-compose podman-docker containerd runc; do apt-get remove $pkg; done
