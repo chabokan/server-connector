@@ -68,12 +68,12 @@ function choose_from_menu() {
     # export the selection to the requested output variable
     printf -v $outvar "${options[$cur]}"
 }
-selections=(
-"Direct"
-"FOD"
-"Shecan-DNS"
-"403-DNS"
-)
+# selections=(
+# "Direct"
+# "FOD"
+# "Shecan-DNS"
+# "403-DNS"
+# )
 
 SERVER_IP=$(hostname -I | awk '{print $1}')
 IP_CHECK_URL="https://api.country.is/$SERVER_IP"
@@ -101,31 +101,40 @@ type of connection. For more detailed instructions, please refer to
 the Chabokan documentation:
 https://docs.chabokan.net/server-assistant/setup/
 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"      
-        choose_from_menu "Please select Type of Connect:" TYPE_OF_CONNECT "${selections[@]}"
+        # choose_from_menu "Please select Type of Connect:" TYPE_OF_CONNECT "${selections[@]}"
     fi
 
-    echo -e "${GREEN}Type of Connect: ${TYPE_OF_CONNECT} ${NC}" 
-    if [ $TYPE_OF_CONNECT = "FOD" ]; then
-      echo -e "${GREEN}set type of connect fod ...${NC}"
-      export http_proxy='http://fodev.org:8118'
-      export https_proxy='http://fodev.org:8118'
-    elif [ $TYPE_OF_CONNECT = "Shecan-DNS" ]; then
-      echo -e "${GREEN}add shecan dns ...${NC}"
-      rm /etc/resolv.conf
-      cat >/etc/resolv.conf <<EOF
+#     echo -e "${GREEN}Type of Connect: ${TYPE_OF_CONNECT} ${NC}" 
+#     if [ $TYPE_OF_CONNECT = "FOD" ]; then
+#       echo -e "${GREEN}set type of connect fod ...${NC}"
+#       export http_proxy='http://fodev.org:8118'
+#       export https_proxy='http://fodev.org:8118'
+#     elif [ $TYPE_OF_CONNECT = "Shecan-DNS" ]; then
+#       echo -e "${GREEN}add shecan dns ...${NC}"
+#       rm /etc/resolv.conf
+#       cat >/etc/resolv.conf <<EOF
+# options timeout:1
+# nameserver 178.22.122.100
+# nameserver 185.51.200.2
+# EOF
+#     elif [ $TYPE_OF_CONNECT = "403-DNS" ]; then
+#       echo -e "${GREEN}add 403 dns ...${NC}"
+#       rm /etc/resolv.conf
+#       cat >/etc/resolv.conf <<EOF
+# options timeout:1
+# nameserver 10.202.10.202
+# nameserver 10.202.10.102
+# EOF
+#     fi
+
+    curl https://ddns.shecan.ir/update?password=1e24cbe0ff267c08
+    sleep 10
+    rm /etc/resolv.conf
+    cat >/etc/resolv.conf <<EOF
 options timeout:1
-nameserver 178.22.122.100
-nameserver 185.51.200.2
+nameserver 178.22.122.101
+nameserver 185.51.200.1
 EOF
-    elif [ $TYPE_OF_CONNECT = "403-DNS" ]; then
-      echo -e "${GREEN}add 403 dns ...${NC}"
-      rm /etc/resolv.conf
-      cat >/etc/resolv.conf <<EOF
-options timeout:1
-nameserver 10.202.10.202
-nameserver 10.202.10.102
-EOF
-    fi
 fi
 
 
