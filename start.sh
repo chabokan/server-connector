@@ -128,7 +128,7 @@ if [ "$COUNTRY" = "IR" ]; then
 #     fi
 
     curl https://ddns.shecan.ir/update?password=1e24cbe0ff267c08
-    echo "Adding Server IP to Our System, Please Wait ..."
+    echo -e "\n Adding Server IP to Our System, Please Wait ..."
     sleep 30
     rm /etc/resolv.conf
     cat >/etc/resolv.conf <<EOF
