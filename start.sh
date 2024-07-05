@@ -93,14 +93,14 @@ if [ "$COUNTRY" = "IR" ]; then
     if [[ "$2" != '' ]]; then
         TYPE_OF_CONNECT=$2
     else
-        echo "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Type of connections are used for connect your server to chabokan server
-assistant.You can choose from various connection types. If you encounter
-any issues, simply try running the command again with a different
-type of connection. For more detailed instructions, please refer to
-the Chabokan documentation:
-https://docs.chabokan.net/server-assistant/setup/
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"      
+#         echo "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# Type of connections are used for connect your server to chabokan server
+# assistant.You can choose from various connection types. If you encounter
+# any issues, simply try running the command again with a different
+# type of connection. For more detailed instructions, please refer to
+# the Chabokan documentation:
+# https://docs.chabokan.net/server-assistant/setup/
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"      
         # choose_from_menu "Please select Type of Connect:" TYPE_OF_CONNECT "${selections[@]}"
     fi
 
@@ -128,13 +128,15 @@ https://docs.chabokan.net/server-assistant/setup/
 #     fi
 
     curl https://ddns.shecan.ir/update?password=1e24cbe0ff267c08
-    sleep 10
+    sleep 30
     rm /etc/resolv.conf
     cat >/etc/resolv.conf <<EOF
 options timeout:1
 nameserver 178.22.122.101
 nameserver 185.51.200.1
 EOF
+
+    echo "Adding Server IP to Our System, Please Wait ..."
 fi
 
 
