@@ -92,7 +92,7 @@ echo -e "${GREEN}Server Country: ${COUNTRY} ${NC}"
 if [ "$COUNTRY" = "IR" ]; then
     if [[ "$2" != '' ]]; then
         TYPE_OF_CONNECT=$2
-    else
+    fi
 #         echo "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 # Type of connections are used for connect your server to chabokan server
 # assistant.You can choose from various connection types. If you encounter
@@ -102,7 +102,7 @@ if [ "$COUNTRY" = "IR" ]; then
 # https://docs.chabokan.net/server-assistant/setup/
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"      
         # choose_from_menu "Please select Type of Connect:" TYPE_OF_CONNECT "${selections[@]}"
-    fi
+    
 
 #     echo -e "${GREEN}Type of Connect: ${TYPE_OF_CONNECT} ${NC}" 
 #     if [ $TYPE_OF_CONNECT = "FOD" ]; then
@@ -128,6 +128,7 @@ if [ "$COUNTRY" = "IR" ]; then
 #     fi
 
     curl https://ddns.shecan.ir/update?password=1e24cbe0ff267c08
+    echo "Adding Server IP to Our System, Please Wait ..."
     sleep 30
     rm /etc/resolv.conf
     cat >/etc/resolv.conf <<EOF
@@ -136,7 +137,6 @@ nameserver 178.22.122.101
 nameserver 185.51.200.1
 EOF
 
-    echo "Adding Server IP to Our System, Please Wait ..."
 fi
 
 
