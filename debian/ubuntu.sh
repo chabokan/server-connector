@@ -62,16 +62,20 @@ echo -e "${GREEN}installing node manager ....${NC}"
 rm -rf /var/ch-manager
 git clone https://github.com/chabokan/node-manager /var/ch-manager
 cd /var/ch-manager/
-pip3 install -r requirements.txt
+python3 -m venv venv
+venv/bin/pip install -r requirements.txt
 sleep 2
-pip3 install -r requirements.txt
+venv/bin/pip install -r requirements.txt
+
 if [ $COUNTRY = "IR" ]; then
   unset http_proxy
   unset https_proxy
 fi
 if ! [ -f "/var/ch-manager/sql_app.db" ]
 then
+   source venv/bin/activate
    alembic upgrade head
+   deactivate
 fi
 docker compose down
 docker compose up -d
