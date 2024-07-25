@@ -30,7 +30,7 @@ service cron restart
 
 echo -e "SHELL=/bin/bash
 BASH_ENV=/.env
-*/1 * * * * root cd /var/ch-manager/ && python3 server-queue.py > /dev/null 2>&1
+*/1 * * * * root cd /var/ch-manager/ && source venv/bin/activate && python3 server-queue.py > /dev/null 2>&1
 " > /etc/cron.d/server-queue
 service cron restart
 
