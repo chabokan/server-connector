@@ -24,6 +24,8 @@ bash /var/server-connector/debian/packages.sh
 echo -e "${GREEN}install docker ....${NC}"
 if [ $os_version = "22" ]; then
     for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do apt-get remove $pkg; done
+elif [ $os_version = "24" ]; then
+    for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do apt-get remove $pkg; done
 elif [ $os_version = "20" ]; then
     for pkg in docker.io docker-doc docker-compose docker-compose-v2 containerd runc; do apt-get remove $pkg; done
 fi
@@ -38,10 +40,13 @@ echo \
     tee /etc/apt/sources.list.d/docker.list > /dev/null
 apt-get update
 if [ $os_version = "22" ]; then
-    VERSION_STRING=5:25.0.3-1~ubuntu.22.04~jammy
+    VERSION_STRING=5:26.1.4-1~ubuntu.22.04~jammy
+    DEBIAN_FRONTEND=noninteractive apt install -y docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plugin
+elif [ $os_version = "24" ]; then
+    VERSION_STRING=5:26.1.4-1~ubuntu.24.04~noble
     DEBIAN_FRONTEND=noninteractive apt install -y docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plugin
 elif [ $os_version = "20" ]; then
-    VERSION_STRING=5:25.0.3-1~ubuntu.20.04~focal
+    VERSION_STRING=5:26.1.4-1~ubuntu.20.04~focal
     DEBIAN_FRONTEND=noninteractive apt install -y docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plugin
 else
     echo -e "${RED} not proper version, please check your ubuntu version first.${NC}"
