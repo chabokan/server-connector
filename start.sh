@@ -91,7 +91,7 @@ elif [[ "${release}" == "debian" ]]; then
 else
     echo -e "${RED}Your operating system is not supported by this script.${NC}\n"
     echo "Please ensure you are using one of the following supported operating systems:"
-    echo "- Ubuntu 16.04+"
+    echo "- Ubuntu 20.04+"
     echo "- Debian 11+"
     exit 1
 fi
