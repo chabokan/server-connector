@@ -4,8 +4,16 @@ iptables -t filter -F DOCKER-USER
 iptables -t filter -F INPUT
 
 host_ip=$(hostname -I | awk '{print $1}')
-ip_addresses="https://chabokan.net/ips.txt"
-select_ip=$(curl -s "$ip_addresses")
+
+response=$(curl -s -w "%{http_code}" -o temp_ips.txt "https://chabokan.net/ips.txt")
+if [ "$response" -eq 200 ]; then
+  select_ip=$(cat temp_ips.txt)
+  rm -f temp_ips.txt
+else
+  echo "Failed to retrieve IP list."
+  rm -f temp_ips.txt
+  exit
+fi
 
 echo "your host ip is: $host_ip"
 echo "adding iptables rules ..."
