@@ -19,7 +19,7 @@ fi
 sleep 15
 
 # Define the URL
-url="http://0.0.0.0:8123/api/v1/connect/?token=${TOKEN}"
+url="http://0.0.0.0:8123/api/v1/connect/?token=${TOKEN}&hub_url=${HUB_URL}"
 
 # Make the POST request with curl
 response=$(curl -X POST -H "Content-Type: application/json" -d "" "$url")
