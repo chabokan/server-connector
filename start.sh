@@ -22,12 +22,20 @@ nameserver 8.8.8.8
 nameserver 1.1.1.1
 EOF
 
+
 if [[ "$1" != '' ]]; then
     TOKEN=$1
 else
     read -p "Enter TOKEN: " TOKEN
 fi
 export TOKEN
+
+if [[ "$1" != '' ]]; then
+    HUB_URL=$1
+else
+    read -p "Enter HUB URL (ex:hub.chabokan.net): " HUB_URL
+fi
+export HUB_URL
 
 echo -e "${GREEN}set Tehran Timezone ...${NC}"
 TZ=Asia/Tehran
