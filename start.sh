@@ -31,7 +31,7 @@ fi
 export TOKEN
 
 if [[ "$2" != '' ]]; then
-    HUB_URL=$1
+    HUB_URL=$2
 else
     read -p "Enter HUB URL (ex:hub.chabokan.net): " HUB_URL
 fi
