@@ -9,6 +9,7 @@ source "${SCRIPT_DIR}/common.sh" 2>/dev/null || {
     log_error() { echo "ERROR: $1"; exit 1; }
     log_info() { echo "INFO: $1"; }
     log_warn() { echo "WARN: $1"; }
+    error_exit() { log_error "$1"; exit "${2:-1}"; }
 }
 
 # Remove old Docker packages

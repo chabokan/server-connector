@@ -40,7 +40,7 @@ sleep 10
 
 # Check if jq is available
 if ! command_exists jq; then
-    log_error "jq is required but not installed. Please install jq first."
+    error_exit "jq is required but not installed. Please install jq first."
 fi
 
 # Check if node-manager API is accessible
