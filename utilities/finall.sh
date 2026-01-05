@@ -3,7 +3,9 @@
 # Final Connection Script
 # Connects the node to the hub after all setup is complete
 
-set -euo pipefail
+# Disable exit on error for this script - we handle errors manually
+set +e
+set -u
 
 # Source common functions
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -73,6 +75,14 @@ while [[ $attempt -le $MAX_RETRIES ]]; do
             continue
         fi
         
+        # Check if response is valid JSON
+        if ! echo "$response" | jq empty 2>/dev/null; then
+            log_warn "Invalid JSON response, retrying... (Response: ${response:0:100})"
+            ((attempt++))
+            sleep $RETRY_DELAY
+            continue
+        fi
+        
         # Parse response
         success_response=$(echo "$response" | jq -r '.success' 2>/dev/null || echo "error")
         
@@ -82,23 +92,40 @@ while [[ $attempt -le $MAX_RETRIES ]]; do
             log_info "=========================================="
             exit 0
         elif [[ "$success_response" == "false" ]]; then
-            message_response=$(echo "$response" | jq -r '.response.message' 2>/dev/null || echo "null")
+            # Try to get error message from different possible locations
+            message=""
             
-            if [[ "$message_response" == "null" ]]; then
-                message=$(echo "$response" | jq -r '.message' 2>/dev/null || echo "Unknown error")
-                log_error "Connection failed: $message"
-            else
-                # Handle array or string message
-                if echo "$message_response" | jq -e '. | type == "array"' >/dev/null 2>&1; then
-                    message=$(echo "$response" | jq -r '.response.message[]' 2>/dev/null | head -1)
+            # Try .response.message first
+            message_response=$(echo "$response" | jq -r '.response.message // empty' 2>/dev/null)
+            if [[ -n "$message_response" ]] && [[ "$message_response" != "null" ]]; then
+                # Check if it's an array
+                if echo "$response" | jq -e '.response.message | type == "array"' >/dev/null 2>&1; then
+                    message=$(echo "$response" | jq -r '.response.message[0]' 2>/dev/null)
                 else
                     message="$message_response"
                 fi
-                log_error "Connection failed: $message"
             fi
+            
+            # If no message found, try .message
+            if [[ -z "$message" ]] || [[ "$message" == "null" ]]; then
+                message=$(echo "$response" | jq -r '.message // empty' 2>/dev/null)
+            fi
+            
+            # If still no message, try .error
+            if [[ -z "$message" ]] || [[ "$message" == "null" ]]; then
+                message=$(echo "$response" | jq -r '.error // empty' 2>/dev/null)
+            fi
+            
+            # If still no message, show full response (limited)
+            if [[ -z "$message" ]] || [[ "$message" == "null" ]]; then
+                message="Unknown error. Response: ${response:0:200}"
+            fi
+            
+            log_error "Connection failed: $message"
+            log_warn "Full response: $response"
             exit 1
         else
-            log_warn "Unexpected response format, retrying... (Response: $response)"
+            log_warn "Unexpected response format, retrying... (Response: ${response:0:200})"
             ((attempt++))
             sleep $RETRY_DELAY
             continue
