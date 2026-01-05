@@ -1,88 +1,59 @@
 #!/bin/bash
 
-# Color
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-NC='\033[0m' # No Color
+# Ubuntu Setup Script
+# Configures Ubuntu server for server-connector
 
-set -e
-# Eror handeling
-trap "echo -e '${RED}ERROR: Run the command again and select a different type of connection!${NC}'" ERR
+set -euo pipefail
 
-echo -e "${GREEN}disable systemd resolved ...${NC}"
-systemctl disable systemd-resolved.service
-systemctl stop systemd-resolved
+# Source common functions
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/../lib/common.sh" 2>/dev/null || {
+    RED='\033[0;31m'
+    GREEN='\033[0;32m'
+    YELLOW='\033[0;33m'
+    NC='\033[0m'
+    log_info() { echo -e "${GREEN}[INFO]${NC} $1"; }
+    log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
+    log_error() { echo -e "${RED}[ERROR]${NC} $1"; exit 1; }
+}
 
+# Error handling
+trap 'log_error "An error occurred. Please check the logs and try again."' ERR
 
-echo -e "${GREEN}updating os ...${NC}"
-apt update -y
+# Ubuntu-specific: Disable systemd-resolved
+log_info "Disabling systemd-resolved..."
+if systemctl is-active --quiet systemd-resolved 2>/dev/null; then
+    systemctl stop systemd-resolved || log_warn "Failed to stop systemd-resolved"
+    systemctl disable systemd-resolved || log_warn "Failed to disable systemd-resolved"
+    log_info "systemd-resolved disabled"
+else
+    log_info "systemd-resolved is not running"
+fi
 
-echo -e "${GREEN}install useful packages ....${NC}"
+# Common setup steps
+log_info "Updating system packages..."
+apt-get update -qq
+
+log_info "Installing required packages..."
 bash /var/server-connector/debian/packages.sh
 
-echo -e "${GREEN}install docker ....${NC}"
-if [ $os_version = "22" ]; then
-    for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do apt-get remove $pkg; done
-elif [ $os_version = "24" ]; then
-    for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do apt-get remove $pkg; done
-elif [ $os_version = "20" ]; then
-    for pkg in docker.io docker-doc docker-compose docker-compose-v2 containerd runc; do apt-get remove $pkg; done
-fi
-apt-get update -y
-DEBIAN_FRONTEND=noninteractive apt install -y ca-certificates curl gnupg
-install -m 0755 -d /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --batch --yes --dearmor -o /etc/apt/keyrings/docker.gpg
-chmod a+r /etc/apt/keyrings/docker.gpg
-echo \
-    "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-    "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
-    tee /etc/apt/sources.list.d/docker.list > /dev/null
-apt-get update
-if [ $os_version = "22" ]; then
-    VERSION_STRING=5:26.1.4-1~ubuntu.22.04~jammy
-    DEBIAN_FRONTEND=noninteractive apt install -y docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plugin
-elif [ $os_version = "24" ]; then
-    VERSION_STRING=5:26.1.4-1~ubuntu.24.04~noble
-    DEBIAN_FRONTEND=noninteractive apt install -y docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plugin
-elif [ $os_version = "20" ]; then
-    VERSION_STRING=5:26.1.4-1~ubuntu.20.04~focal
-    DEBIAN_FRONTEND=noninteractive apt install -y docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plugin
-else
-    echo -e "${RED} not proper version, please check your ubuntu version first.${NC}"
-    exit 1
-fi
-apt-mark hold docker-ce docker-ce-cli
-apt purge postfix -y
+# Install Docker
+source "${SCRIPT_DIR}/../lib/docker.sh" 2>/dev/null || {
+    log_error "Failed to source docker.sh. Please ensure lib/docker.sh exists."
+}
+install_docker "ubuntu" "$os_version"
 
-service docker start
+# Setup node-manager
+setup_node_manager "ubuntu" "$os_version"
 
-echo -e "${GREEN}installing node manager ....${NC}"
-
-rm -rf /var/ch-manager
-git clone https://github.com/chabokan/node-manager /var/ch-manager
-cd /var/ch-manager/
-python3 -m venv venv
-venv/bin/pip install -r requirements.txt
-sleep 2
-venv/bin/pip install -r requirements.txt
-
-if [ $COUNTRY = "IR" ]; then
-  unset http_proxy
-  unset https_proxy
-fi
-if ! [ -f "/var/ch-manager/sql_app.db" ]
-then
-   source venv/bin/activate
-   alembic upgrade head
-   deactivate
-fi
-docker compose down
-docker compose up -d
-declare -p | grep -Ev 'BASHOPTS|BASH_VERSINFO|EUID|PPID|SHELLOPTS|UID' > /.env
-
+# Run configuration scripts
+log_info "Running system configuration..."
 bash /var/server-connector/debian/settings.sh
 
+log_info "Configuring firewall..."
 bash /var/server-connector/utilities/firewall.sh
 
+log_info "Finalizing connection..."
 bash /var/server-connector/utilities/finall.sh
+
+log_info "Ubuntu setup completed successfully!"
