@@ -48,7 +48,7 @@ log_success "Base DNS configured"
 if [[ "$1" != '' ]]; then
     TOKEN=$1
 else
-    read -p "$(echo -e ${GREEN}Enter TOKEN: ${NC})" TOKEN
+    read -p "$(echo -e "${GREEN}Enter TOKEN: ${NC}")" TOKEN
 fi
 export TOKEN
 
@@ -56,7 +56,7 @@ export TOKEN
 if [[ "$2" != '' ]]; then
     HUB_URL=$2
 else
-    read -p "$(echo -e ${GREEN}Enter HUB URL (ex:hub.chabokan.net): ${NC})" HUB_URL
+    read -p "$(echo -e "${GREEN}Enter HUB URL (ex:hub.chabokan.net): ${NC}")" HUB_URL
 fi
 export HUB_URL
 
