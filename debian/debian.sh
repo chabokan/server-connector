@@ -5,45 +5,46 @@
 
 set -euo pipefail
 
-# Source common functions
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=/dev/null
 source "${SCRIPT_DIR}/../lib/common.sh" 2>/dev/null || {
     RED='\033[0;31m'
     GREEN='\033[0;32m'
     YELLOW='\033[0;33m'
+    CYAN='\033[0;36m'
+    BOLD='\033[1m'
     NC='\033[0m'
-    log_info() { echo -e "${GREEN}[INFO]${NC} $1"; }
-    log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
-    log_error() { echo -e "${RED}[ERROR]${NC} $1"; exit 1; }
+    log_info() { echo -e "${GREEN}[INFO]${NC} $1" >&2; }
+    log_warn() { echo -e "${YELLOW}[WARN]${NC} $1" >&2; }
+    log_error() { echo -e "${RED}[ERROR]${NC} $1" >&2; exit 1; }
+    log_success() { echo -e "${GREEN}[OK]${NC} $1" >&2; }
+    log_step() { echo -e "${CYAN}${BOLD}[$1/$2]${NC} $3" >&2; }
+    error_exit() { log_error "$1"; exit "${2:-1}"; }
+    on_error() { log_error "Failed at line ${1:-unknown}: ${BASH_COMMAND:-unknown}"; exit 1; }
 }
 
-# Error handling
-trap 'log_error "An error occurred. Please check the logs and try again."' ERR
+trap 'on_error $LINENO' ERR
 
-# Common setup steps
-log_info "Updating system packages..."
+TOTAL_STEPS=5
+print_banner "Debian setup (${os_version:-?})" 2>/dev/null || true
+
+log_step 1 "$TOTAL_STEPS" "Updating apt and installing packages..."
 apt-get update -qq
-
-log_info "Installing required packages..."
 bash /var/server-connector/debian/packages.sh
 
-# Install Docker
-source "${SCRIPT_DIR}/../lib/docker.sh" 2>/dev/null || {
-    log_error "Failed to source docker.sh. Please ensure lib/docker.sh exists."
-}
+log_step 2 "$TOTAL_STEPS" "Installing Docker and node-manager..."
+# shellcheck source=/dev/null
+source "${SCRIPT_DIR}/../lib/docker.sh" || error_exit "Failed to source docker.sh"
 install_docker "debian" "$os_version"
-
-# Setup node-manager
 setup_node_manager "debian" "$os_version"
 
-# Run configuration scripts
-log_info "Running system configuration..."
+log_step 3 "$TOTAL_STEPS" "Applying system settings..."
 bash /var/server-connector/debian/settings.sh
 
-log_info "Configuring firewall..."
+log_step 4 "$TOTAL_STEPS" "Configuring firewall..."
 bash /var/server-connector/utilities/firewall.sh
 
-log_info "Finalizing connection..."
-bash /var/server-connector/utilities/finall.sh
+log_step 5 "$TOTAL_STEPS" "Connecting node to hub..."
+bash /var/server-connector/utilities/final.sh
 
-log_info "Debian setup completed successfully!"
+log_success "Debian setup completed successfully!"

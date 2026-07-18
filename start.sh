@@ -1,185 +1,234 @@
 #!/bin/bash
 
-# Color codes
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+# Server Connector — bootstrap entry point
+# Usage: bash start.sh <TOKEN> <HUB_URL>
+# Optional env: DEBUG=1, NO_COLOR=1, SHECAN_DDNS_PASSWORD=..., DDNS_WAIT_SECONDS=90
 
-# Logging functions
-log_info() {
-    echo -e "${GREEN}[INFO]${NC} $1"
-}
+set -euo pipefail
 
-log_warn() {
-    echo -e "${YELLOW}[WARN]${NC} $1"
-}
+# Resolve script directory when run from a clone; bootstrap path has no lib yet
+BOOTSTRAP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd || true)"
 
-log_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
+# Minimal logging until common.sh is available (curl|bash bootstrap)
+_bootstrap_log() { echo -e "$1" >&2; }
+log_info()    { _bootstrap_log "\033[0;32m[INFO]\033[0m $1"; }
+log_warn()    { _bootstrap_log "\033[0;33m[WARN]\033[0m $1"; }
+log_error()   { _bootstrap_log "\033[0;31m[ERROR]\033[0m $1"; }
+log_success() { _bootstrap_log "\033[0;32m[OK]\033[0m $1"; }
+error_exit()  { log_error "$1"; exit "${2:-1}"; }
 
-log_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
-}
+if [[ $EUID -ne 0 ]]; then
+    error_exit "Please run this script as root (sudo or root user)."
+fi
 
-# Check root user
-[[ $EUID -ne 0 ]] && log_error "Please run command with root privilege" && exit 1
+# Prefer local common.sh when present (dev / already cloned)
+if [[ -n "${BOOTSTRAP_DIR}" ]] && [[ -f "${BOOTSTRAP_DIR}/lib/common.sh" ]]; then
+    # shellcheck source=/dev/null
+    source "${BOOTSTRAP_DIR}/lib/common.sh"
+fi
 
-set -e
+trap 'log_error "Bootstrap failed at line $LINENO: $BASH_COMMAND"; exit 1' ERR
+
+export INSTALL_LOG="${INSTALL_LOG:-/var/log/server-connector-install.log}"
+mkdir -p "$(dirname "$INSTALL_LOG")" 2>/dev/null || true
+touch "$INSTALL_LOG" 2>/dev/null || true
+
+print_banner "Chabokan Server Connector" 2>/dev/null || true
+log_info "Starting server-connector bootstrap..."
+log_info "Install log: $INSTALL_LOG"
 
 # Unset proxy variables
-unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY
+unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY || true
 
 # Setup base DNS
-log_info "Configuring base DNS servers..."
-if [[ -f /etc/resolv.conf ]]; then
+if declare -f setup_dns >/dev/null 2>&1; then
+    setup_dns "8.8.8.8" "1.1.1.1"
+else
+    log_info "Configuring base DNS servers..."
     rm -f /etc/resolv.conf
-fi
-cat >/etc/resolv.conf <<EOF
-options timeout:1
+    cat >/etc/resolv.conf <<EOF
+options timeout:2 attempts:3 rotate
 nameserver 8.8.8.8
 nameserver 1.1.1.1
 EOF
-log_success "Base DNS configured"
+    log_success "Base DNS configured"
+fi
 
 # Get TOKEN
-if [[ "$1" != '' ]]; then
+if [[ -n "${1:-}" ]]; then
     TOKEN=$1
 else
-    read -p "$(echo -e "${GREEN}Enter TOKEN: ${NC}")" TOKEN
+    read -r -p "$(echo -e "\033[0;32mEnter TOKEN: \033[0m")" TOKEN
 fi
 export TOKEN
 
 # Get HUB_URL
-if [[ "$2" != '' ]]; then
+if [[ -n "${2:-}" ]]; then
     HUB_URL=$2
 else
-    read -p "$(echo -e "${GREEN}Enter HUB URL (ex:hub.chabokan.net): ${NC}")" HUB_URL
+    read -r -p "$(echo -e "\033[0;32mEnter HUB URL (ex: hub.chabokan.net): \033[0m")" HUB_URL
 fi
 export HUB_URL
 
+# Optional third arg reserved for future use (e.g. connect type) — never reuse $2
+TYPE_OF_CONNECT="${3:-${TYPE_OF_CONNECT:-}}"
+export TYPE_OF_CONNECT
+
+if declare -f validate_token >/dev/null 2>&1; then
+    validate_token "$TOKEN"
+    validate_url "$HUB_URL"
+else
+    [[ -z "$TOKEN" ]] && error_exit "TOKEN cannot be empty"
+    [[ ${#TOKEN} -lt 8 ]] && error_exit "TOKEN is too short (minimum 8 characters)"
+    [[ -z "$HUB_URL" ]] && error_exit "HUB_URL cannot be empty"
+fi
+
 # Set timezone
 log_info "Setting timezone to Asia/Tehran..."
-TZ=Asia/Tehran
-if [[ -d /usr/share/zoneinfo/$TZ ]]; then
-    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+TZ_NAME=Asia/Tehran
+if [[ -d /usr/share/zoneinfo/$TZ_NAME ]]; then
+    ln -snf "/usr/share/zoneinfo/$TZ_NAME" /etc/localtime && echo "$TZ_NAME" > /etc/timezone
     log_success "Timezone set to Asia/Tehran"
 else
-    log_warn "Timezone $TZ not found, skipping timezone setup"
+    log_warn "Timezone $TZ_NAME not found, skipping timezone setup"
 fi
 
 # Detect server IP and country
 log_info "Detecting server IP address..."
-SERVER_IP=$(hostname -I | awk '{print $1}')
-if [[ -z "$SERVER_IP" ]]; then
-    log_error "Cannot detect server IP address"
-    exit 1
+if declare -f get_server_ip >/dev/null 2>&1; then
+    SERVER_IP=$(get_server_ip)
+else
+    SERVER_IP=$(hostname -I | awk '{print $1}')
+    [[ -z "$SERVER_IP" ]] && error_exit "Cannot detect server IP address"
 fi
+export SERVER_IP
 
-log_info "Checking server country..."
-IP_CHECK_URL="https://api.country.is/$SERVER_IP"
-CHECK_IP=$(curl -s --max-time 10 --connect-timeout 5 "$IP_CHECK_URL" 2>/dev/null || echo "")
-
-if [[ -z "$CHECK_IP" ]] || echo "$CHECK_IP" | grep -q "\"error\""; then
-    log_error "IP address not found or API error"
-    exit 1
+if declare -f detect_country >/dev/null 2>&1; then
+    detect_country "$SERVER_IP"
+else
+    log_info "Checking server country..."
+    CHECK_IP=$(curl -s --max-time 10 --connect-timeout 5 "https://api.country.is/$SERVER_IP" 2>/dev/null || echo "")
+    if [[ -z "$CHECK_IP" ]] || echo "$CHECK_IP" | grep -q "\"error\""; then
+        log_warn "IP country lookup failed — continuing as UNKNOWN (non-IR path)"
+        COUNTRY="UNKNOWN"
+    else
+        COUNTRY=$(echo "$CHECK_IP" | sed -n 's/.*"country"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)
+        [[ -z "$COUNTRY" ]] && COUNTRY="UNKNOWN"
+    fi
+    export COUNTRY
 fi
-
-COUNTRY=$(echo "$CHECK_IP" | grep -o -P '"country":"\K[^"]+' | tr -d \" || echo "")
-if [[ -z "$COUNTRY" ]]; then
-    log_warn "Could not parse country from API response"
-    COUNTRY="UNKNOWN"
-fi
-export COUNTRY
 
 log_success "Server IP: ${SERVER_IP}"
 log_success "Server Country: ${COUNTRY}"
 
 # Handle Iran-specific configuration
-if [ "$COUNTRY" = "IR" ]; then
-    log_info "Iranian server detected, applying special configuration..."
-    
-    if [[ "$2" != '' ]]; then
-        TYPE_OF_CONNECT=$2
+if [[ "$COUNTRY" == "IR" ]]; then
+    log_info "Iranian server detected — applying Shecan / DDNS configuration..."
+
+    SHECAN_DDNS_PASSWORD="${SHECAN_DDNS_PASSWORD:-3c9382bdcc86c72b}"
+    DDNS_WAIT_SECONDS="${DDNS_WAIT_SECONDS:-90}"
+
+    log_info "Updating Shecan DDNS..."
+    if curl -sS --max-time 15 "https://ddns.shecan.ir/update?password=${SHECAN_DDNS_PASSWORD}" >/dev/null 2>&1; then
+        log_success "DDNS update request sent"
+    else
+        log_warn "DDNS update failed — continuing; DNS propagation wait may not help"
     fi
 
-    log_info "Updating DDNS..."
-    curl -s --max-time 10 "https://ddns.shecan.ir/update?password=1e24cbe0ff267c08" >/dev/null 2>&1 || log_warn "DDNS update failed"
-    log_info "Adding Server IP to Our System, Please Wait ..."
-    sleep 90
-    
-    log_info "Configuring Shecan DNS servers..."
-    rm -f /etc/resolv.conf
-    cat >/etc/resolv.conf <<EOF
-options timeout:1
-nameserver 178.22.122.101
-nameserver 185.51.200.1
+    if declare -f wait_with_countdown >/dev/null 2>&1; then
+        wait_with_countdown "$DDNS_WAIT_SECONDS" "Waiting for IP registration / DDNS propagation"
+    else
+        log_info "Waiting ${DDNS_WAIT_SECONDS}s for IP registration..."
+        sleep "$DDNS_WAIT_SECONDS"
+    fi
+
+    if declare -f setup_dns >/dev/null 2>&1; then
+        setup_dns "${SHECAN_DNS_PRIMARY:-178.22.122.100}" "${SHECAN_DNS_SECONDARY:-185.51.200.2}"
+    else
+        log_info "Configuring Shecan DNS servers..."
+        rm -f /etc/resolv.conf
+        cat >/etc/resolv.conf <<EOF
+options timeout:2 attempts:3 rotate
+nameserver 178.22.122.100
+nameserver 185.51.200.2
 EOF
-    log_success "Shecan DNS configured"
+        log_success "Shecan DNS configured"
+    fi
 fi
 
-# Check OS and set release variable
+# Detect and validate OS
 log_info "Detecting operating system..."
-if [[ -f /etc/os-release ]]; then
-    source /etc/os-release
-    release=$ID
-elif [[ -f /usr/lib/os-release ]]; then
-    source /usr/lib/os-release
-    release=$ID
+if declare -f validate_os >/dev/null 2>&1; then
+    validate_os
+    release="$OS_ID"
 else
-    log_error "Failed to check the system OS, please contact the server author!"
-    exit 1
+    if [[ -f /etc/os-release ]]; then
+        # shellcheck source=/dev/null
+        source /etc/os-release
+        release=$ID
+    elif [[ -f /usr/lib/os-release ]]; then
+        # shellcheck source=/dev/null
+        source /usr/lib/os-release
+        release=$ID
+    else
+        error_exit "Failed to detect the system OS"
+    fi
+    export os_version
+    os_version=$(grep -i version_id /etc/os-release | cut -d '"' -f2 | cut -d '.' -f1)
+    if [[ "$release" == "ubuntu" && ${os_version} -lt 20 ]]; then
+        error_exit "Please use Ubuntu 20 or higher"
+    elif [[ "$release" == "debian" && ${os_version} -lt 11 ]]; then
+        error_exit "Please use Debian 11 or higher"
+    elif [[ "$release" != "ubuntu" && "$release" != "debian" ]]; then
+        error_exit "Unsupported OS. Use Ubuntu 20.04+ or Debian 11+"
+    fi
 fi
 
-os_version=""
-export os_version=$(grep -i version_id /etc/os-release | cut -d \" -f2 | cut -d . -f1)
+log_success "OS validated: ${release:-$OS_ID} ${os_version}"
 
-log_info "Detected OS: $release $os_version"
-
-# Validate OS version
-if [[ "${release}" == "ubuntu" ]]; then
-    if [[ ${os_version} -lt 20 ]]; then
-        log_error "Please use Ubuntu 20 or higher"
-        exit 1
-    fi
-elif [[ "${release}" == "debian" ]]; then
-    if [[ ${os_version} -lt 11 ]]; then
-        log_error "Please use Debian 11 or higher"
-        exit 1
-    fi
-else
-    log_error "Your operating system is not supported by this script."
-    echo "Please ensure you are using one of the following supported operating systems:"
-    echo "- Ubuntu 20.04+"
-    echo "- Debian 11+"
-    exit 1
+TOKEN_MASKED=$(declare -f mask_secret >/dev/null 2>&1 && mask_secret "$TOKEN" || echo "****")
+if declare -f print_summary >/dev/null 2>&1; then
+    print_summary "$SERVER_IP" "$COUNTRY" "${release:-$OS_ID} ${os_version}" "$HUB_URL" "$TOKEN_MASKED"
 fi
-
-log_success "OS version validated"
 
 # Prepare installation directory
 log_info "Preparing installation directory..."
-rm -fr /var/server-connector/
+rm -rf /var/server-connector/
 cd /var
 
-# Install git and clone repository (common for both OS)
 log_info "Updating package lists..."
-apt update -y
+apt-get update -y -qq
+
 log_info "Installing git..."
-apt install git -y
+DEBIAN_FRONTEND=noninteractive apt-get install -y -qq git curl ca-certificates
+
 log_info "Cloning server-connector repository..."
-git clone https://github.com/chabokan/server-connector.git
-log_success "Repository cloned"
+if ! git clone --depth 1 https://github.com/chabokan/server-connector.git /var/server-connector; then
+    error_exit "Failed to clone server-connector repository"
+fi
+log_success "Repository cloned to /var/server-connector"
+
+# Load full common library from the cloned tree
+# shellcheck source=/dev/null
+source /var/server-connector/lib/common.sh
+export INSTALL_LOG
+trap 'on_error $LINENO' ERR
 
 # Run OS-specific setup
-if [ "$release" = "ubuntu" ]; then
-    log_info "Starting Ubuntu setup..."
-    bash /var/server-connector/debian/ubuntu.sh
-elif [ "$release" = "debian" ]; then
-    log_info "Starting Debian setup..."
-    bash /var/server-connector/debian/debian.sh
-fi
+case "${release:-$OS_ID}" in
+    ubuntu)
+        log_info "Starting Ubuntu setup..."
+        bash /var/server-connector/debian/ubuntu.sh
+        ;;
+    debian)
+        log_info "Starting Debian setup..."
+        bash /var/server-connector/debian/debian.sh
+        ;;
+    *)
+        error_exit "Unsupported OS after clone: ${release:-$OS_ID}"
+        ;;
+esac
 
-log_success "Setup completed successfully!"
+echo "" >&2
+print_banner "Setup completed successfully" 2>/dev/null || log_success "Setup completed successfully!"
+log_success "Install log saved to: $INSTALL_LOG"
