@@ -187,64 +187,72 @@ install_docker() {
     fi
 }
 
+# Update code without removing the repository-local SQLite database or settings.
+prepare_node_manager_checkout() {
+    local repository="$1"
+    local directory="$2"
+
+    if [[ -e "$directory" ]]; then
+        if [[ ! -d "$directory/.git" ]]; then
+            error_exit "$directory exists but is not a git checkout; refusing to remove server data"
+        fi
+        log_info "Updating existing node-manager checkout without removing its database..."
+        git -C "$directory" pull --ff-only || \
+            error_exit "Node-manager checkout has local changes or update failed"
+    else
+        log_info "Cloning node-manager repository..."
+        git clone --depth 1 "$repository" "$directory" || \
+            error_exit "Failed to clone node-manager repository"
+    fi
+}
+
 # Setup node-manager
 setup_node_manager() {
     local os_id="$1"
     local os_version="$2"
     local node_manager_repo="${NODE_MANAGER_REPO:-https://github.com/chabokan/node-manager}"
-    local use_venv=true
     local pip_log
-    pip_log=$(mktemp)
+    local venv_backup=""
+    local current_python=""
+    local target_python
 
     log_info "Setting up node-manager..."
+    exec 8>/var/lock/chabokan-server-queue.lock
+    flock 8 || error_exit "Failed to lock the host job worker during installation"
 
-    if [[ -d /var/ch-manager ]]; then
-        log_info "Removing existing node-manager installation..."
-        rm -rf /var/ch-manager
+    if [[ -f /var/ch-manager/docker-compose.yml ]]; then
+        # Keep the running checkout intact if the replacement image is unavailable.
+        docker compose -f /var/ch-manager/docker-compose.yml pull web || \
+            error_exit "Failed to pull node-manager image before updating code"
     fi
-
-    log_info "Cloning node-manager repository..."
-    if ! git clone --depth 1 "$node_manager_repo" /var/ch-manager; then
-        rm -f "$pip_log"
-        error_exit "Failed to clone node-manager repository"
-    fi
+    prepare_node_manager_checkout "$node_manager_repo" /var/ch-manager
+    pip_log=$(mktemp)
 
     cd /var/ch-manager/ || error_exit "Failed to change to node-manager directory"
 
-    if [[ "$os_id" == "ubuntu" ]]; then
-        log_info "Creating Python virtual environment..."
-        python3 -m venv venv || error_exit "Failed to create virtual environment"
-
-        log_info "Installing Python dependencies into venv..."
-        venv/bin/pip install --upgrade pip >"$pip_log" 2>&1 || true
-        if ! retry_command 3 5 venv/bin/pip install -r requirements.txt; then
-            log_error "pip install failed. Last output:"
-            tail -n 40 "$pip_log" >&2 || true
-            # Retry once showing output
-            if ! venv/bin/pip install -r requirements.txt; then
-                rm -f "$pip_log"
-                error_exit "Failed to install Python dependencies"
-            fi
+    target_python=$(python3 -c 'import sys; print("%d.%d" % sys.version_info[:2])')
+    if [[ -x venv/bin/python ]]; then
+        current_python=$(venv/bin/python -c 'import sys; print("%d.%d" % sys.version_info[:2])' 2>/dev/null || true)
+    fi
+    if [[ -d venv ]] && [[ "$current_python" != "$target_python" ]]; then
+        venv_backup="venv.backup.$(date +%s).$$"
+        log_info "Host Python changed from ${current_python:-unknown} to $target_python; rebuilding venv..."
+        mv venv "$venv_backup" || error_exit "Failed to preserve old virtual environment"
+    fi
+    if [[ ! -d venv ]]; then
+        python3 -m venv venv || {
+            [[ -n "$venv_backup" ]] && mv "$venv_backup" venv
+            error_exit "Failed to create virtual environment"
+        }
+    fi
+    venv/bin/python -m pip install --upgrade pip >"$pip_log" 2>&1 || true
+    if ! retry_command 3 5 venv/bin/python -m pip install -r requirements.txt; then
+        if [[ -n "$venv_backup" ]]; then
+            rm -rf venv
+            mv "$venv_backup" venv
         fi
-    elif [[ "$os_id" == "debian" ]]; then
-        use_venv=false
-        if [[ "$os_version" -ge 12 ]]; then
-            log_info "Installing Python dependencies (system / break-system-packages)..."
-            if ! retry_command 3 5 pip3 install --break-system-packages -r requirements.txt; then
-                pip3 install --break-system-packages -r requirements.txt || {
-                    rm -f "$pip_log"
-                    error_exit "Failed to install Python dependencies"
-                }
-            fi
-        else
-            log_info "Installing Python dependencies (Debian ${os_version})..."
-            if ! retry_command 3 5 pip3 install -r requirements.txt; then
-                pip3 install -r requirements.txt || {
-                    rm -f "$pip_log"
-                    error_exit "Failed to install Python dependencies"
-                }
-            fi
-        fi
+        rm -f "$pip_log"
+        error_exit "Failed to install Python dependencies in the virtual environment"
     fi
     rm -f "$pip_log"
 
@@ -252,22 +260,12 @@ setup_node_manager() {
         unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY || true
     fi
 
-    if [[ ! -f "/var/ch-manager/sql_app.db" ]]; then
-        log_info "Initializing database (alembic)..."
-        if [[ "$use_venv" == "true" ]] && [[ -f venv/bin/activate ]]; then
-            # shellcheck source=/dev/null
-            source venv/bin/activate
-            alembic upgrade head || error_exit "Failed to initialize database"
-            deactivate 2>/dev/null || true
-        else
-            alembic upgrade head || error_exit "Failed to initialize database"
-        fi
-        log_success "Database initialized"
-    fi
+    log_info "Applying database migrations while preserving existing data..."
+    venv/bin/python -m alembic upgrade head || error_exit "Failed to migrate node-manager database"
 
     log_info "Starting Docker Compose services..."
-    docker compose down >/dev/null 2>&1 || true
-    docker compose up -d || error_exit "Failed to start Docker Compose services"
+    docker compose pull web || error_exit "Failed to pull node-manager image"
+    docker compose up -d --force-recreate web || error_exit "Failed to start Docker Compose services"
     log_success "Docker Compose services started"
 
     if declare -f write_runtime_env >/dev/null 2>&1; then
@@ -282,6 +280,12 @@ export COUNTRY='${COUNTRY:-}'
 EOF
         chmod 600 /.env
     fi
+
+    if [[ -n "$venv_backup" ]]; then
+        rm -rf "$venv_backup"
+    fi
+    flock -u 8
+    exec 8>&-
 
     log_success "Node-manager setup completed"
 }

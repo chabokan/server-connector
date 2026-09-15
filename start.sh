@@ -40,7 +40,54 @@ log_info "Install log: $INSTALL_LOG"
 # Unset proxy variables
 unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY || true
 
-# Setup base DNS
+# Get TOKEN
+if [[ -n "${1:-}" ]]; then
+    TOKEN=$1
+else
+    read -r -p "$(echo -e "\033[0;32mEnter TOKEN: \033[0m")" TOKEN </dev/tty || \
+        error_exit "No terminal available for TOKEN prompt; pass TOKEN and HUB_URL as arguments"
+fi
+export TOKEN
+
+# Get HUB_URL
+if [[ -n "${2:-}" ]]; then
+    HUB_URL=$2
+else
+    read -r -p "$(echo -e "\033[0;32mEnter HUB URL (ex: hub.chabokan.net): \033[0m")" HUB_URL </dev/tty || \
+        error_exit "No terminal available for HUB_URL prompt; pass TOKEN and HUB_URL as arguments"
+fi
+if declare -f normalize_hub_url >/dev/null 2>&1; then
+    HUB_URL=$(normalize_hub_url "$HUB_URL") || error_exit "Invalid HUB_URL"
+else
+    HUB_URL="${HUB_URL#https://}"
+    HUB_URL="${HUB_URL%/}"
+    [[ "$HUB_URL" =~ ^[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?(:[0-9]{1,5})?$ ]] || \
+        error_exit "HUB_URL must be an HTTPS hostname or origin without a path"
+    if [[ "$HUB_URL" == *:* ]]; then
+        HUB_PORT="${HUB_URL##*:}"
+        (( 10#$HUB_PORT >= 1 && 10#$HUB_PORT <= 65535 )) || \
+            error_exit "HUB_URL port must be between 1 and 65535"
+    fi
+fi
+export HUB_URL
+
+# Optional third arg reserved for future use (e.g. connect type) — never reuse $2
+TYPE_OF_CONNECT="${3:-${TYPE_OF_CONNECT:-}}"
+export TYPE_OF_CONNECT
+
+if declare -f validate_token >/dev/null 2>&1; then
+    validate_token "$TOKEN"
+    validate_url "$HUB_URL"
+    validate_python
+else
+    [[ -z "$TOKEN" ]] && error_exit "TOKEN cannot be empty"
+    [[ ${#TOKEN} -lt 8 ]] && error_exit "TOKEN is too short (minimum 8 characters)"
+    [[ -z "$HUB_URL" ]] && error_exit "HUB_URL cannot be empty"
+    python3 -c 'import sys; sys.exit(0 if (3, 9) <= sys.version_info[:2] <= (3, 13) else 1)' || \
+        error_exit "node-manager requires host Python 3.9 through 3.13"
+fi
+
+# Setup base DNS after validating inputs
 if declare -f setup_dns >/dev/null 2>&1; then
     setup_dns "8.8.8.8" "1.1.1.1"
 else
@@ -52,35 +99,6 @@ nameserver 8.8.8.8
 nameserver 1.1.1.1
 EOF
     log_success "Base DNS configured"
-fi
-
-# Get TOKEN
-if [[ -n "${1:-}" ]]; then
-    TOKEN=$1
-else
-    read -r -p "$(echo -e "\033[0;32mEnter TOKEN: \033[0m")" TOKEN
-fi
-export TOKEN
-
-# Get HUB_URL
-if [[ -n "${2:-}" ]]; then
-    HUB_URL=$2
-else
-    read -r -p "$(echo -e "\033[0;32mEnter HUB URL (ex: hub.chabokan.net): \033[0m")" HUB_URL
-fi
-export HUB_URL
-
-# Optional third arg reserved for future use (e.g. connect type) — never reuse $2
-TYPE_OF_CONNECT="${3:-${TYPE_OF_CONNECT:-}}"
-export TYPE_OF_CONNECT
-
-if declare -f validate_token >/dev/null 2>&1; then
-    validate_token "$TOKEN"
-    validate_url "$HUB_URL"
-else
-    [[ -z "$TOKEN" ]] && error_exit "TOKEN cannot be empty"
-    [[ ${#TOKEN} -lt 8 ]] && error_exit "TOKEN is too short (minimum 8 characters)"
-    [[ -z "$HUB_URL" ]] && error_exit "HUB_URL cannot be empty"
 fi
 
 # Set timezone
@@ -193,7 +211,9 @@ fi
 
 # Prepare installation directory
 log_info "Preparing installation directory..."
-rm -rf /var/server-connector/
+if [[ -e /var/server-connector ]] && [[ ! -d /var/server-connector/.git ]]; then
+    error_exit "/var/server-connector exists but is not a git checkout; refusing to overwrite it"
+fi
 cd /var
 
 log_info "Updating package lists..."
@@ -202,11 +222,14 @@ apt-get update -y -qq
 log_info "Installing git..."
 DEBIAN_FRONTEND=noninteractive apt-get install -y -qq git curl ca-certificates
 
-log_info "Cloning server-connector repository..."
-if ! git clone --depth 1 https://github.com/chabokan/server-connector.git /var/server-connector; then
-    error_exit "Failed to clone server-connector repository"
+if [[ -d /var/server-connector/.git ]]; then
+    log_info "Updating existing server-connector checkout..."
+    git -C /var/server-connector pull --ff-only || error_exit "Connector checkout has local changes or update failed"
+else
+    log_info "Cloning server-connector repository..."
+    git clone --depth 1 https://github.com/chabokan/server-connector.git /var/server-connector || \
+        error_exit "Failed to clone server-connector repository"
 fi
-log_success "Repository cloned to /var/server-connector"
 
 # Load full common library from the cloned tree
 # shellcheck source=/dev/null

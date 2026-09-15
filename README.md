@@ -7,14 +7,15 @@ Bootstrap a fresh Ubuntu or Debian VPS into a **Chabokan** node: install system 
 | Requirement | Details |
 |-------------|---------|
 | **OS** | Ubuntu 20.04+ or Debian 11+ |
+| **Python** | Host `python3` must be 3.9–3.13; Ubuntu 20.04's default 3.8 needs an upgrade before bootstrap |
 | **Privileges** | Must run as **root** |
 | **Network** | Outbound HTTPS (GitHub, Docker Hub, hub API, country lookup) |
-| **Inputs** | Node `TOKEN` and hub hostname / URL |
+| **Inputs** | Node `TOKEN` and HTTPS hub hostname / origin (no path) |
 
 ## Quick start
 
 ```bash
-# Interactive prompts for TOKEN and HUB_URL
+# Interactive prompts for TOKEN and HUB_URL (read from /dev/tty)
 curl -fsSL https://raw.githubusercontent.com/chabokan/server-connector/main/start.sh | bash
 
 # Or pass arguments directly
@@ -45,7 +46,7 @@ start.sh
         └─ Connect to hub via local API :8123
 ```
 
-On success, the node is registered with the hub and services are running under Docker Compose in `/var/ch-manager`.
+On success, the node is registered with the hub and services are running under Docker Compose in `/var/ch-manager`. A repeat install updates the existing Git checkouts without deleting `/var/ch-manager/sql_app.db`; a checkout with conflicting local changes causes the update to stop.
 
 ## Environment variables
 
@@ -57,7 +58,7 @@ On success, the node is registered with the hub and services are running under D
 | `SHECAN_DDNS_PASSWORD` | *(built-in)* | Shecan DDNS password (Iran servers) |
 | `DDNS_WAIT_SECONDS` | `90` | Wait after DDNS update (Iran) |
 | `DISABLE_IPV6` | `1` | Disable IPv6 via sysctl |
-| `CLEANUP_CONFIGS` | `1` | Remove copied configs from the clone after apply |
+| `CLEANUP_CONFIGS` | `0` | Remove tracked config templates from the clone after apply; normally leave them in place so Git updates work |
 | `ALLOWED_IPS_URL` | `https://chabokan.net/ips.txt` | Remote allowlist for firewall |
 | `NODE_MANAGER_REPO` | `https://github.com/chabokan/node-manager` | Override node-manager git URL |
 | `CONNECT_MAX_RETRIES` | `8` | Hub connect retry count |
@@ -105,7 +106,7 @@ If the public IP resolves to country `IR`:
 
 1. Shecan DDNS is updated (`SHECAN_DDNS_PASSWORD`)
 2. Script waits for propagation (`DDNS_WAIT_SECONDS`, with a visible countdown)
-3. DNS is switched to Shecan (`178.22.122.100`, `185.51.200.2`)
+3. DNS is switched to Shecan (`178.22.122.101`, `185.51.200.1`)
 
 Country detection is best-effort. If the lookup API is unreachable, install continues as non-IR (`COUNTRY=UNKNOWN`).
 
@@ -125,8 +126,8 @@ Cron (configured by `settings.sh`):
 
 - Daily: `git -C /var/server-connector pull --ff-only`
 - Weekly: re-run package install script
-- Every minute: `server-queue.py` (if present)
-- Nightly: `update_core.sh` (if present)
+- Every minute: host worker `server-queue.py` (if present); host commands and updates run here, while service jobs can also run in the web worker
+- Nightly: `update_core.sh` (if present); uses the host virtual environment and refuses to discard local Git changes
 
 ## Troubleshooting
 
@@ -134,7 +135,7 @@ Cron (configured by `settings.sh`):
 
 1. Confirm Compose is up: `cd /var/ch-manager && docker compose ps`
 2. Hit the API: `curl -s http://127.0.0.1:8123`
-3. Verify `TOKEN` / `HUB_URL` (re-run with correct args, or update `/.env` and retry `utilities/final.sh`)
+3. Verify `TOKEN` / `HUB_URL` (re-run with correct args, or update `/.env` and retry `bash /var/server-connector/utilities/final.sh`; it loads `/.env` if the variables are not already exported)
 4. Inspect `/var/log/server-connector-install.log`
 
 **Locked out of SSH after firewall**

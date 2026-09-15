@@ -44,6 +44,11 @@ EOF
     SHECAN_DNS_SECONDARY="185.51.200.2"
 }
 
+if [[ -z "${TOKEN:-}" || -z "${HUB_URL:-}" ]] && [[ -f /.env ]]; then
+    # Allow a manual retry after editing the runtime environment file.
+    source /.env
+fi
+
 if [[ -z "${TOKEN:-}" ]]; then
     error_exit "TOKEN environment variable is not set"
 fi
@@ -51,6 +56,8 @@ fi
 if [[ -z "${HUB_URL:-}" ]]; then
     error_exit "HUB_URL environment variable is not set"
 fi
+HUB_URL=$(normalize_hub_url "$HUB_URL") || error_exit "Invalid HUB_URL"
+export HUB_URL
 
 if [[ "${COUNTRY:-}" == "IR" ]]; then
     log_info "Configuring Shecan DNS for Iranian servers..."
@@ -108,23 +115,27 @@ while [[ $attempt -le $MAX_RETRIES ]]; do
     if curl -s --max-time 5 --connect-timeout 3 "http://127.0.0.1:8123" >/dev/null 2>&1; then
         log_info "API is up — connect attempt ${attempt}/${MAX_RETRIES}..."
 
-        # Prefer JSON body (avoids TOKEN in process list / access logs); fall back to query string
-        response=$(curl -s --max-time 30 --connect-timeout 10 \
+        # Use JSON for current nodes. Older nodes require query params and return 422.
+        response_file=$(mktemp)
+        http_code=$(jq -nc '{token: env.TOKEN, hub_url: env.HUB_URL}' | \
+            curl -s --max-time 75 --connect-timeout 10 \
             -X POST \
             -H "Content-Type: application/json" \
             -H "Accept: application/json" \
-            -d "{\"token\":\"${TOKEN}\",\"hub_url\":\"${HUB_URL}\"}" \
-            "$API_URL" 2>/dev/null || echo "")
+            --data-binary @- -o "$response_file" -w '%{http_code}' \
+            "$API_URL" 2>/dev/null || echo "000")
+        response=$(cat "$response_file")
 
-        if [[ -z "$response" ]] || ! echo "$response" | jq empty 2>/dev/null; then
-            log_debug "JSON body connect failed or empty — trying query-string API"
-            # shellcheck disable=SC2086
-            response=$(curl -s --max-time 30 --connect-timeout 10 \
-                -X POST \
-                -H "Content-Type: application/json" \
-                -d "" \
-                "${API_URL}?token=${TOKEN}&hub_url=${HUB_URL}" 2>/dev/null || echo "")
+        if [[ "$http_code" == "422" ]] && echo "$response" | jq -e \
+            '[.detail[]? | select(.loc[0] == "query" and .loc[1] == "token")] | length > 0' >/dev/null 2>&1; then
+            log_debug "Older node-manager requires query parameters — retrying with encoded values"
+            http_code=$(curl -s --max-time 75 --connect-timeout 10 \
+                -X POST -G --data-urlencode "token=$TOKEN" --data-urlencode "hub_url=$HUB_URL" \
+                -H "Accept: application/json" -o "$response_file" -w '%{http_code}' \
+                "$API_URL" 2>/dev/null || echo "000")
+            response=$(cat "$response_file")
         fi
+        rm -f "$response_file"
 
         if [[ -z "$response" ]]; then
             log_warn "Empty response from API, retrying in ${RETRY_DELAY}s..."
@@ -150,7 +161,8 @@ while [[ $attempt -le $MAX_RETRIES ]]; do
             exit 0
         elif [[ "$success_response" == "false" ]]; then
             message=$(extract_error_message "$response")
-            if is_retryable_failure "$message" && [[ $attempt -lt $MAX_RETRIES ]]; then
+            if { [[ "$http_code" == 5* ]] || [[ "$(echo "$response" | jq -r '.status // empty')" == "543" ]] || \
+                 is_retryable_failure "$message"; } && [[ $attempt -lt $MAX_RETRIES ]]; then
                 log_warn "Connection failed (retryable): $message"
                 ((attempt++))
                 sleep "$RETRY_DELAY"

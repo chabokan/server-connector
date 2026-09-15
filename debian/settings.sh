@@ -58,7 +58,7 @@ log_info "Configuring cron jobs..."
 
 if [[ -f /var/ch-manager/update_core.sh ]]; then
     cat > /etc/cron.d/update-core <<'EOF'
-0 3 * * * root bash /var/ch-manager/update_core.sh >> /var/log/update-core.log 2>&1
+0 3 * * * root flock /var/lock/chabokan-server-queue.lock bash /var/ch-manager/update_core.sh >> /var/log/update-core.log 2>&1
 EOF
     chmod 644 /etc/cron.d/update-core
     log_info "Core update cron job configured"
@@ -82,7 +82,7 @@ if [[ -d /var/ch-manager ]] && [[ -f /var/ch-manager/server-queue.py ]]; then
     cat > /etc/cron.d/server-queue <<EOF
 SHELL=/bin/bash
 BASH_ENV=/.env
-*/1 * * * * root $QUEUE_CMD >> /var/log/server-queue.log 2>&1
+*/1 * * * * root flock -n /var/lock/chabokan-server-queue.lock bash -c '$QUEUE_CMD' >> /var/log/server-queue.log 2>&1
 EOF
     chmod 644 /etc/cron.d/server-queue
     log_info "Server queue cron job configured"
@@ -141,7 +141,7 @@ restart_service ssh
 restart_service sshd
 restart_service vsftpd
 
-CLEANUP_CONFIGS="${CLEANUP_CONFIGS:-1}"
+CLEANUP_CONFIGS="${CLEANUP_CONFIGS:-0}"
 if [[ "$CLEANUP_CONFIGS" == "1" ]]; then
     log_info "Cleaning up temporary config files..."
     rm -f /var/server-connector/configs/vsftpd.conf
