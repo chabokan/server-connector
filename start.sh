@@ -125,7 +125,7 @@ log_success "Server Country: ${COUNTRY}"
 if [[ "$COUNTRY" == "IR" ]]; then
     log_info "Iranian server detected — applying Shecan / DDNS configuration..."
 
-    SHECAN_DDNS_PASSWORD="${SHECAN_DDNS_PASSWORD:-3c9382bdcc86c72b}"
+    SHECAN_DDNS_PASSWORD="${SHECAN_DDNS_PASSWORD:-5941a36d2c3a2091}"
     DDNS_WAIT_SECONDS="${DDNS_WAIT_SECONDS:-90}"
 
     log_info "Updating Shecan DDNS..."
@@ -143,14 +143,14 @@ if [[ "$COUNTRY" == "IR" ]]; then
     fi
 
     if declare -f setup_dns >/dev/null 2>&1; then
-        setup_dns "${SHECAN_DNS_PRIMARY:-178.22.122.100}" "${SHECAN_DNS_SECONDARY:-185.51.200.2}"
+        setup_dns "${SHECAN_DNS_PRIMARY:-178.22.122.101}" "${SHECAN_DNS_SECONDARY:-185.51.200.1}"
     else
         log_info "Configuring Shecan DNS servers..."
         rm -f /etc/resolv.conf
         cat >/etc/resolv.conf <<EOF
 options timeout:2 attempts:3 rotate
-nameserver 178.22.122.100
-nameserver 185.51.200.2
+nameserver 178.22.122.101
+nameserver 185.51.200.1
 EOF
         log_success "Shecan DNS configured"
     fi

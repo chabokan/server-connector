@@ -28,8 +28,8 @@ _COMMON_SH_LOADED=1
 INSTALL_LOG="${INSTALL_LOG:-/var/log/server-connector-install.log}"
 
 # Shecan DNS (aligned across scripts; safe to re-source)
-: "${SHECAN_DNS_PRIMARY:=178.22.122.100}"
-: "${SHECAN_DNS_SECONDARY:=185.51.200.2}"
+: "${SHECAN_DNS_PRIMARY:=178.22.122.101}"
+: "${SHECAN_DNS_SECONDARY:=185.51.200.1}"
 
 # -----------------------------------------------------------------------------
 # Internal log writer
