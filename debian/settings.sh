@@ -82,6 +82,7 @@ if [[ -d /var/ch-manager ]] && [[ -f /var/ch-manager/server-queue.py ]]; then
     cat > /etc/cron.d/server-queue <<EOF
 SHELL=/bin/bash
 BASH_ENV=/.env
+TZ=Asia/Tehran
 */1 * * * * root flock -n /var/lock/chabokan-server-queue.lock bash -c '$QUEUE_CMD' >> /var/log/server-queue.log 2>&1
 EOF
     chmod 644 /etc/cron.d/server-queue

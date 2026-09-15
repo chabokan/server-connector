@@ -119,14 +119,14 @@ Useful paths and checks:
 | `/.env` | Runtime env for cron (`TOKEN`, `HUB_URL`, …) — mode `600` |
 | `/builds`, `/storage`, `/backups` | Working directories |
 | `docker compose -f /var/ch-manager/docker-compose.yml ps` | Service status |
-| `curl -s http://127.0.0.1:8123` | Local API health |
+| `curl -fsS http://127.0.0.1:8123/openapi.json` | Local API health |
 
 Cron (configured by `settings.sh`):
 
 - Daily: `git -C /var/server-connector pull --ff-only`
 - Weekly: re-run package install script
 - Every minute: host worker `server-queue.py` (if present); host commands and updates run here, while service jobs can also run in the web worker
-- Nightly: `update_core.sh` (if present); uses the host virtual environment and refuses to discard local Git changes
+- Nightly at 03:00: `update_core.sh` (if present) checks Git and the registry image. It skips dependency installation, migrations, and container recreation when nothing changed; after an update it checks the local API before recording the applied version. An unhealthy image-only update rolls back to the previously applied local image when available. Failed updates remain eligible for the next run, and tracked local Git changes block automatic updates. See `/var/log/update-core.log` for the result.
 
 ## Troubleshooting
 
