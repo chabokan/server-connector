@@ -23,7 +23,7 @@ source "${SCRIPT_DIR}/../lib/common.sh" 2>/dev/null || {
     command_exists() { command -v "$1" >/dev/null 2>&1; }
     setup_dns() {
         local a="${1:-8.8.8.8}" b="${2:-1.1.1.1}"
-        cat > /etc/resolv.conf <<EOF
+        cat > "${DNS_CONFIG_FILE:-/etc/resolv.conf}" <<EOF
 options timeout:2 attempts:3 rotate
 nameserver $a
 nameserver $b
@@ -112,7 +112,7 @@ is_retryable_failure() {
 }
 
 while [[ $attempt -le $MAX_RETRIES ]]; do
-    if curl -s --max-time 5 --connect-timeout 3 "http://127.0.0.1:8123" >/dev/null 2>&1; then
+    if curl -fsS --max-time 5 --connect-timeout 3 "http://127.0.0.1:8123/openapi.json" >/dev/null 2>&1; then
         log_info "API is up — connect attempt ${attempt}/${MAX_RETRIES}..."
 
         # Use JSON for current nodes. Older nodes require query params and return 422.
@@ -154,6 +154,9 @@ while [[ $attempt -le $MAX_RETRIES ]]; do
         success_response=$(echo "$response" | jq -r '.success' 2>/dev/null || echo "error")
 
         if [[ "$success_response" == "true" ]]; then
+            log_info "Restoring default DNS after successful setup..."
+            setup_dns "8.8.8.8" "1.1.1.1" || \
+                error_exit "Could not restore default DNS after hub connection"
             echo "" >&2
             print_banner "Node connected to Chabokan successfully!"
             log_success "Hub: $HUB_URL"
@@ -188,7 +191,7 @@ echo "" >&2
 log_error "Failed to connect to hub after ${MAX_RETRIES} attempts."
 log_error "Checklist:"
 log_error "  1. docker compose -f /var/ch-manager/docker-compose.yml ps"
-log_error "  2. curl -s http://127.0.0.1:8123  (API must respond)"
+log_error "  2. curl -fsS http://127.0.0.1:8123/openapi.json  (API must respond)"
 log_error "  3. TOKEN and HUB_URL are correct"
 log_error "  4. Install log: ${INSTALL_LOG:-/var/log/server-connector-install.log}"
 exit 1

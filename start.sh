@@ -104,7 +104,7 @@ fi
 # Set timezone
 log_info "Setting timezone to Asia/Tehran..."
 TZ_NAME=Asia/Tehran
-if [[ -d /usr/share/zoneinfo/$TZ_NAME ]]; then
+if [[ -f /usr/share/zoneinfo/$TZ_NAME ]]; then
     ln -snf "/usr/share/zoneinfo/$TZ_NAME" /etc/localtime && echo "$TZ_NAME" > /etc/timezone
     log_success "Timezone set to Asia/Tehran"
 else

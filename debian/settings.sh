@@ -106,46 +106,13 @@ else
     log_warn "vsftpd.conf not found, skipping vsftpd configuration"
 fi
 
-# Configure SSH — validate before applying permanently
-log_info "Configuring SSH..."
-if [[ -f /var/server-connector/configs/sshd_config ]]; then
-    SSHD_BACKUP=""
-    if [[ -f /etc/ssh/sshd_config ]]; then
-        SSHD_BACKUP="/etc/ssh/sshd_config.backup.$(date +%s)"
-        cp /etc/ssh/sshd_config "$SSHD_BACKUP"
-        log_info "Backed up sshd_config to $SSHD_BACKUP"
-    fi
-
-    cp /var/server-connector/configs/sshd_config /etc/ssh/sshd_config
-    chmod 644 /etc/ssh/sshd_config
-
-    if sshd -t 2>/tmp/sshd-test.err; then
-        log_success "SSH configuration validated"
-    else
-        log_error "SSH configuration validation failed:"
-        cat /tmp/sshd-test.err >&2 || true
-        if [[ -n "$SSHD_BACKUP" ]] && [[ -f "$SSHD_BACKUP" ]]; then
-            cp "$SSHD_BACKUP" /etc/ssh/sshd_config
-            log_warn "Restored previous sshd_config — new config was NOT applied"
-        else
-            error_exit "Invalid sshd_config and no backup available"
-        fi
-    fi
-    rm -f /tmp/sshd-test.err
-else
-    log_warn "sshd_config not found, skipping SSH configuration"
-fi
-
 log_info "Restarting services..."
-restart_service ssh
-restart_service sshd
 restart_service vsftpd
 
 CLEANUP_CONFIGS="${CLEANUP_CONFIGS:-0}"
 if [[ "$CLEANUP_CONFIGS" == "1" ]]; then
     log_info "Cleaning up temporary config files..."
     rm -f /var/server-connector/configs/vsftpd.conf
-    rm -f /var/server-connector/configs/sshd_config
 fi
 
 log_success "System settings configuration completed"

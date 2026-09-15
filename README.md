@@ -41,12 +41,12 @@ start.sh
         ├─ Packages (apt)
         ├─ Docker CE + compose
         ├─ node-manager (/var/ch-manager)
-        ├─ System settings (dirs, cron, SSH, vsftpd)
+        ├─ System settings (dirs, cron, vsftpd)
         ├─ Firewall (iptables allowlist)
         └─ Connect to hub via local API :8123
 ```
 
-On success, the node is registered with the hub and services are running under Docker Compose in `/var/ch-manager`. A repeat install updates the existing Git checkouts without deleting `/var/ch-manager/sql_app.db`; a checkout with conflicting local changes causes the update to stop.
+On success, the node is registered with the hub and services are running under Docker Compose in `/var/ch-manager`. Iranian servers use Shecan DNS during provisioning and hub connection; after a successful connection, DNS is restored to `8.8.8.8` and `1.1.1.1`. A repeat install updates the existing Git checkouts without deleting `/var/ch-manager/sql_app.db`; a checkout with conflicting local changes causes the update to stop.
 
 ## Environment variables
 
@@ -80,13 +80,12 @@ lib/
 debian/
   ubuntu.sh / debian.sh  # OS orchestrators (stepped install)
   packages.sh            # apt packages
-  settings.sh            # sysctl, cron, sshd, vsftpd
+  settings.sh            # sysctl, cron, vsftpd
 utilities/
   firewall.sh            # iptables rules
   final.sh               # Hub connect
   finall.sh              # Compatibility wrapper → final.sh
 configs/
-  sshd_config
   vsftpd.conf
 ```
 
@@ -134,13 +133,13 @@ Cron (configured by `settings.sh`):
 **Hub connect failed**
 
 1. Confirm Compose is up: `cd /var/ch-manager && docker compose ps`
-2. Hit the API: `curl -s http://127.0.0.1:8123`
+2. Hit the API: `curl -fsS http://127.0.0.1:8123/openapi.json`
 3. Verify `TOKEN` / `HUB_URL` (re-run with correct args, or update `/.env` and retry `bash /var/server-connector/utilities/final.sh`; it loads `/.env` if the variables are not already exported)
 4. Inspect `/var/log/server-connector-install.log`
 
 **Locked out of SSH after firewall**
 
-Rules keep `ESTABLISHED` sessions and allow the current SSH client IP when `SSH_CLIENT` is set. Prefer running the install from an already-open root SSH session. Allowed Chabokan IPs are loaded from `ALLOWED_IPS_URL`.
+The installer leaves `/etc/ssh/sshd_config` unchanged and does not restart SSH. Firewall rules keep established sessions and allow new TCP connections on the SSH port reported by `sshd -T` and the port of the current SSH session (if available). If neither can be detected, the firewall step stops before changing any rules. Allowed Chabokan IPs are loaded from `ALLOWED_IPS_URL`.
 
 **Docker install fails**
 
@@ -152,8 +151,7 @@ IPv6 is disabled by default; vsftpd is configured for IPv4 (`listen=YES`, `liste
 
 ## Security notes
 
-- Requires root; replaces DNS, SSH (`sshd_config`), FTP, and iptables on the host.
-- Default SSH config allows root password login (`PermitRootLogin yes`) — change this after bootstrap if your policy requires key-only access.
+- Requires root; replaces DNS, FTP, and iptables on the host. SSH configuration and its listening port are preserved.
 - Prefer passing `SHECAN_DDNS_PASSWORD` via environment instead of relying on a baked-in default.
 - `/.env` holds secrets; keep permissions `600` and do not commit it.
 

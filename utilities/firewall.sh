@@ -36,6 +36,28 @@ ensure_docker_user_chain() {
     fi
 }
 
+ssh_ports=()
+if command -v sshd >/dev/null 2>&1; then
+    while IFS= read -r port; do
+        [[ "$port" =~ ^[0-9]+$ ]] || continue
+        (( 10#$port >= 1 && 10#$port <= 65535 )) || continue
+        ssh_ports+=("$port")
+    done < <(sshd -T 2>/dev/null | awk '$1 == "port" {print $2}')
+fi
+
+# A systemd SSH socket may listen on a different port from sshd_config.
+if [[ -n "${SSH_CONNECTION:-}" ]]; then
+    read -r _ _ _ connected_port <<< "$SSH_CONNECTION"
+    if [[ "${connected_port:-}" =~ ^[0-9]+$ ]] &&
+       (( 10#$connected_port >= 1 && 10#$connected_port <= 65535 )); then
+        ssh_ports+=("$connected_port")
+    fi
+fi
+
+if (( ${#ssh_ports[@]} == 0 )); then
+    error_exit "Could not detect the existing SSH port; firewall rules were not changed"
+fi
+
 log_info "Preparing firewall chains..."
 ensure_docker_user_chain
 
@@ -48,15 +70,14 @@ iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT 2>/dev/nu
     iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 iptables -A INPUT -i lo -j ACCEPT
 
+# Preserve new SSH connections on the existing port(s) after flushing INPUT.
+while IFS= read -r port; do
+    iptables -A INPUT -p tcp --dport "$port" -j ACCEPT
+    log_info "Keeping SSH port $port open"
+done < <(printf '%s\n' "${ssh_ports[@]}" | sort -nu)
+
 host_ip=$(hostname -I | awk '{print $1}')
 log_info "Host IP: $host_ip"
-
-# Allow current SSH session source if detectable
-ssh_client="${SSH_CLIENT%% *}"
-if [[ -n "${ssh_client:-}" ]]; then
-    log_info "Allowing current SSH client: $ssh_client"
-    iptables -A INPUT -s "$ssh_client" -p tcp --dport 22 -j ACCEPT
-fi
 
 ALLOWED_IPS_URL="${ALLOWED_IPS_URL:-https://chabokan.net/ips.txt}"
 log_info "Fetching allowed IP list from $ALLOWED_IPS_URL..."

@@ -302,6 +302,7 @@ detect_country() {
 # Setup DNS (backs up previous resolv.conf)
 setup_dns() {
     local dns_servers=("$@")
+    local resolv_conf="${DNS_CONFIG_FILE:-/etc/resolv.conf}"
 
     if [[ ${#dns_servers[@]} -eq 0 ]]; then
         dns_servers=("8.8.8.8" "1.1.1.1")
@@ -309,14 +310,14 @@ setup_dns() {
 
     log_info "Setting up DNS servers: ${dns_servers[*]}"
 
-    if [[ -f /etc/resolv.conf ]] && [[ ! -L /etc/resolv.conf ]]; then
-        cp /etc/resolv.conf "/etc/resolv.conf.backup.$(date +%s)" 2>/dev/null || true
-    elif [[ -L /etc/resolv.conf ]]; then
+    if [[ -f "$resolv_conf" ]] && [[ ! -L "$resolv_conf" ]]; then
+        cp "$resolv_conf" "${resolv_conf}.backup.$(date +%s)" 2>/dev/null || true
+    elif [[ -L "$resolv_conf" ]]; then
         # systemd-resolved symlink — replace with static file after stop
-        rm -f /etc/resolv.conf
+        rm -f "$resolv_conf" || return 1
     fi
 
-    cat > /etc/resolv.conf <<EOF
+    cat > "$resolv_conf" <<EOF || return 1
 options timeout:2 attempts:3 rotate
 $(for dns in "${dns_servers[@]}"; do echo "nameserver $dns"; done)
 EOF
