@@ -263,6 +263,10 @@ setup_node_manager() {
     log_info "Applying database migrations while preserving existing data..."
     venv/bin/python -m alembic upgrade head || error_exit "Failed to migrate node-manager database"
 
+    log_info "Ensuring Docker registry auth file exists..."
+    install -d -m 0700 /root/.docker
+    [[ -f /root/.docker/config.json ]] || printf '{}' > /root/.docker/config.json
+
     log_info "Starting Docker Compose services..."
     docker compose pull web || error_exit "Failed to pull node-manager image"
     docker compose up -d --force-recreate web || error_exit "Failed to start Docker Compose services"

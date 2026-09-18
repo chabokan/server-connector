@@ -5,6 +5,9 @@
 
 set -euo pipefail
 
+# Host jobs run without a login shell; sshd and iptables are often in sbin.
+export PATH="/usr/sbin:/sbin:${PATH}"
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=/dev/null
 source "${SCRIPT_DIR}/../lib/common.sh" 2>/dev/null || {

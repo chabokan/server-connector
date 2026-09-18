@@ -87,6 +87,10 @@ TZ=Asia/Tehran
 EOF
     chmod 644 /etc/cron.d/server-queue
     log_info "Server queue cron job configured"
+
+    # The first hub connection runs before the minute cron has fired.
+    (cd /var/ch-manager && python3 -c 'from host_inventory import write_host_inventory; write_host_inventory()') || \
+        error_exit "Could not collect host disks before connecting to the hub"
 fi
 
 restart_service cron
